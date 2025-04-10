@@ -19,6 +19,7 @@ namespace SharedLibrary
         public DbSet<ChatChannel> DBChatChannel { get; set; }
         public DbSet<ChatMessage> DBChatMessage { get; set; }
 
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

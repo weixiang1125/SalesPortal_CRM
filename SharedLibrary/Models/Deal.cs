@@ -6,7 +6,7 @@ namespace SharedLibrary.Models
     {
         [Key]
         public int DealID { get; set; }
-        public int ContactID { get; set; }
+        public int? ContactID { get; set; }
         public string? DealName { get; set; }
         public float? Value { get; set; }
         public string? Stage { get; set; }
