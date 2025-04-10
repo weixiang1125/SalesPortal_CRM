@@ -1,72 +1,87 @@
-﻿using CRM_API.Services;
-using Microsoft.IdentityModel.Tokens;
+﻿using Microsoft.IdentityModel.Tokens;
+using SharedLibrary;
 using SharedLibrary.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
-public class AuthService : IAuthService
+namespace CRM_API.Services
 {
-    private readonly IUsersService _usersService;
-    private readonly IConfiguration _configuration;
-
-    public AuthService(IUsersService usersService, IConfiguration configuration)
+    public class AuthService : IAuthService
     {
-        _usersService = usersService;
-        _configuration = configuration;
-    }
+        private readonly IUsersService _usersService;
+        private readonly ApplicationDbContext _dbContext;
+        private readonly IConfiguration _configuration;
 
-    public async Task<string?> LoginAsync(string username, string password)
-    {
-        var user = await _usersService.GetUserByUsernameAsync(username);
-
-        if (user == null || !await _usersService.VerifyPasswordAsync(password, user.Password))
+        public AuthService(IUsersService usersService, ApplicationDbContext dbContext, IConfiguration configuration)
         {
-            return null; // Invalid login credentials
+            _usersService = usersService;
+            _dbContext = dbContext;
+            _configuration = configuration;
         }
 
-        // Generate JWT token if login is successful
-        var token = GenerateJwtToken(user);
-
-        return token; // Return the token directly, no need to store it in the user object
-    }
-
-    private string GenerateJwtToken(Users user)
-    {
-        var claims = new[]
+        public async Task<string?> LoginAsync(string username, string password)
         {
-            new Claim(ClaimTypes.Name, user.Username),
-            new Claim(ClaimTypes.NameIdentifier, user.UserID.ToString()), // Use UserID (int)
-            //new Claim(ClaimTypes.Role, user.Role) // Include the user's role if necessary
-        };
+            var user = await _usersService.GetUserByUsernameAsync(username);
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Secret"]));
-        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            if (user == null || !VerifyPassword(password, user.Password))
+            {
+                return null;
+            }
 
-        var token = new JwtSecurityToken(
-            issuer: _configuration["Jwt:Issuer"],
-            audience: _configuration["Jwt:Audience"],
-            claims: claims,
-            expires: DateTime.Now.AddHours(1),
-            signingCredentials: creds
-        );
-
-        return new JwtSecurityTokenHandler().WriteToken(token); // Return the JWT token as a string
-    }
-
-    public async Task<bool> RegisterAsync(string username, string password, string? email, string? phone)
-    {
-        // Check if user already exists
-        var existingUser = await _usersService.GetUserByUsernameAsync(username);
-        if (existingUser != null)
-        {
-            return false;
+            return GenerateJwtToken(user);
         }
 
-        // Hash password and register
-        await _usersService.RegisterUserAsync(username, password, email, phone);
-        return true;
+        public async Task<bool> RegisterAsync(string username, string password, string? email, string? phone)
+        {
+            var existingUser = await _usersService.GetUserByUsernameAsync(username);
+            if (existingUser != null)
+            {
+                return false;
+            }
+
+            string hashedPassword = BCrypt.Net.BCrypt.HashPassword(password);
+
+            var newUser = new Users
+            {
+                Username = username,
+                Password = hashedPassword,
+                Email = email,
+                Phone = phone,
+                CreatedDate = DateTime.UtcNow
+            };
+
+            _dbContext.DBUsers.Add(newUser);
+            await _dbContext.SaveChangesAsync();
+            return true;
+        }
+
+        private bool VerifyPassword(string password, string storedPassword)
+        {
+            return BCrypt.Net.BCrypt.Verify(password, storedPassword);
+        }
+
+        private string GenerateJwtToken(Users user)
+        {
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.Name, user.Username),
+                new Claim(ClaimTypes.NameIdentifier, user.UserID.ToString()),
+                // new Claim(ClaimTypes.Role, user.Role) // Add this if needed
+            };
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Secret"]));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var token = new JwtSecurityToken(
+                issuer: _configuration["Jwt:Issuer"],
+                audience: _configuration["Jwt:Audience"],
+                claims: claims,
+                expires: DateTime.Now.AddHours(1),
+                signingCredentials: creds
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
     }
-
-
 }
