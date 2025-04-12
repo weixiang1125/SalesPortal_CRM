@@ -162,6 +162,14 @@
             document.getElementById('sidebar').classList.toggle('hidden');
         }
 
+        // Check if the token is expired immediately when the page loads
+    if (!localStorage.getItem(tokenKey) || isTokenExpired(localStorage.getItem(tokenKey))) {
+        sessionStorage.setItem("logoutReason", "Your session has expired. Please log in again.");
+        logout();  // Log out due to expired token
+    } else {
+        setTokenExpirationCheck();
+    }
+
         // Show logout warning modal
         function showLogoutWarning() {
             const modal = new bootstrap.Modal(document.getElementById('logoutWarningModal'));
@@ -184,7 +192,7 @@
         // Log out the user
         function logout() {
             console.log("Logging out...");
-            sessionStorage.setItem("logoutReason", "Your session has expired. Please log in again.");
+      
             localStorage.removeItem(tokenKey);
             localStorage.removeItem(refreshTokenKey);
             window.location.href = "/Login";

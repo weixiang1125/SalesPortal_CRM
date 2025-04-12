@@ -19,6 +19,18 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+
+app.Use(async (context, next) =>
+{
+    if (string.IsNullOrEmpty(context.Request.Path) || context.Request.Path == "/")
+    {
+        context.Response.Redirect("/Login");
+        return;
+    }
+
+    await next();
+});
+
 app.UseSession(); // add this after app.UseRouting();
 
 app.UseAuthorization();

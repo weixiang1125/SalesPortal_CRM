@@ -29,7 +29,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"]))
         };
     });
-
+builder.Services.AddAuthorization();
 // Add services to the container
 builder.Services.AddScoped<IUsersService, UsersService>();  // Register UserService
 builder.Services.AddScoped<IAuthService, AuthService>();
