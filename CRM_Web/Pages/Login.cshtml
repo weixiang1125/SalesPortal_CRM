@@ -116,6 +116,8 @@
         </div>
     </div>
 
+    <div id="loginError" class="text-danger mt-3 text-center" style="display: none;"></div>
+
 </body>
 </html>
 
@@ -146,7 +148,7 @@
             if (response.ok) {
                 const data = await response.json();
                 localStorage.setItem('authToken', data.token);
-                window.location.href = 'https://localhost:44373/';
+                window.location.href = 'https://localhost:44373/Dashboard';
             } else {
                 // Show error message from API if any
                 const errorData = await response.json().catch(() => ({}));
@@ -161,4 +163,11 @@
             document.getElementById('loginError').textContent = 'Something went wrong. Please try again later.';
         });
     });
+
+    const reason = sessionStorage.getItem("logoutReason");
+    if (reason) {
+        document.getElementById("loginError").textContent = reason;
+        document.getElementById("loginError").style.display = "block";
+        sessionStorage.removeItem("logoutReason");
+    }
 </script>

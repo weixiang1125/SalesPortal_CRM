@@ -1,6 +1,10 @@
 ﻿using CRM_API.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using SharedLibrary.Models;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace CRM_API.Controllers
 {
@@ -10,6 +14,8 @@ namespace CRM_API.Controllers
     {
         private readonly IAuthService _authService;
         private readonly IUsersService _usersService;
+        private readonly string _secretKey = "NLGYHV3ja6UCoPOJBq-2ZcStWwQyMhocH_WRxeoKP5w"; // Secret key for signing JWT
+        private readonly int _expirationMinutes = 1; // JWT token expiration time
 
         public AuthController(IAuthService authService, IUsersService usersService)
         {
@@ -45,5 +51,65 @@ namespace CRM_API.Controllers
 
             return Ok(new { Token = token });
         }
+
+        // POST api/auth/refresh-token
+        [HttpPost("refresh-token")]
+        public IActionResult RefreshToken([FromBody] RefreshTokenRequest request)
+        {
+            // Validate the old token and refresh it
+            var principal = GetPrincipalFromExpiredToken(request.Token);
+
+            if (principal == null)
+            {
+                return Unauthorized("Invalid or expired token.");
+            }
+
+            // Generate a new token based on the claims of the expired token
+            var newToken = GenerateJwtToken(principal.Identity as ClaimsIdentity);
+
+            return Ok(new { Token = newToken });
+        }
+
+        // Helper method to get the principal from the expired token
+        private ClaimsPrincipal GetPrincipalFromExpiredToken(string token)
+        {
+            try
+            {
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var key = Encoding.UTF8.GetBytes(_secretKey);
+
+                var principal = tokenHandler.ValidateToken(token, new TokenValidationParameters
+                {
+                    ValidateIssuer = false,
+                    ValidateAudience = false,
+                    ValidateLifetime = false, // Ignore lifetime validation since we're refreshing
+                    IssuerSigningKey = new SymmetricSecurityKey(key)
+                }, out var securityToken);
+
+                return principal;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        // Helper method to generate a new JWT token
+        private string GenerateJwtToken(ClaimsIdentity identity)
+        {
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secretKey));
+            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var token = new JwtSecurityToken(
+                issuer: "SalesPortal",
+                audience: "SalesPortal",
+                claims: identity.Claims,
+                expires: DateTime.Now.AddMinutes(_expirationMinutes),
+                signingCredentials: credentials
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
     }
 }

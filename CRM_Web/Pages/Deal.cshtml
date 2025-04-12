@@ -1,0 +1,113 @@
+﻿@page
+@model ErrorModel
+@{
+    ViewData["Title"] = "";
+ }
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Sales Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 text-gray-800">
+    <div class="max-w-7xl mx-auto p-6 space-y-8">
+
+        <!-- Overview Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white rounded-lg shadow-md p-5">
+                <p class="text-sm text-gray-500">Total Sales (Annual)</p>
+                <p class="text-3xl font-bold text-green-600">RM 58,722,607.57</p>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-5">
+                <p class="text-sm text-gray-500">Total Outstanding (Annual)</p>
+                <p class="text-3xl font-bold text-yellow-600">RM 30,542,051.39</p>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-5">
+                <p class="text-sm text-gray-500">Total Paid (Annual)</p>
+                <p class="text-3xl font-bold text-blue-600">RM 28,180,556.18</p>
+            </div>
+        </div>
+
+        <!-- Deal Status -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white rounded-lg shadow p-4 flex justify-between items-center">
+                <span class="text-gray-700 font-medium">Negotiation</span>
+                <button class="text-sm bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded">🔍</button>
+            </div>
+            <div class="bg-white rounded-lg shadow p-4 flex justify-between items-center">
+                <span class="text-gray-700 font-medium">Closing (Approve)</span>
+                <button class="text-sm bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded">🔍</button>
+            </div>
+            <div class="bg-white rounded-lg shadow p-4 flex justify-between items-center">
+                <span class="text-gray-700 font-medium">Deal Rate (%)</span>
+                <button class="text-sm bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded">📈</button>
+            </div>
+        </div>
+
+        <!-- Date Filter -->
+        <div class="flex items-center gap-4">
+            <input type="date" class="border border-gray-300 rounded-md p-2 shadow-sm" />
+        </div>
+
+        <!-- Customer Purchase Summary -->
+        <div>
+            <h2 class="text-2xl font-semibold mb-4">Customer Purchase Summary</h2>
+            <div class="overflow-auto bg-white rounded-lg shadow">
+                <table class="min-w-full text-left border-collapse">
+                    <thead class="bg-gray-100 text-gray-600 text-sm">
+                        <tr>
+                            <th class="p-3 border-b">Handled By</th>
+                            <th class="p-3 border-b">Company Name</th>
+                            <th class="p-3 border-b">Code</th>
+                            <th class="p-3 border-b">Total Outstanding</th>
+                            <th class="p-3 border-b">Last Purchase Amount</th>
+                            <th class="p-3 border-b">Last Purchase Date</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm">
+                        <tr class="border-t hover:bg-gray-50">
+                            <td class="p-3">AN MARKETING TRADING SDN BHD</td>
+                            <td class="p-3">XHNI ENERGY SMART (MALAYSIA) SDN. BHD.-LF</td>
+                            <td class="p-3">3000-X0008</td>
+                            <td class="p-3">RM 253,960.40</td>
+                            <td class="p-3">RM 139,230.00</td>
+                            <td class="p-3">15-04-2025</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Sales Performance -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white rounded-lg shadow p-4 text-center text-gray-600 text-sm">
+                <p>Total Sales: <strong>0</strong></p>
+                <p>Target Sales: <strong>0</strong></p>
+                <p>Success Rate: <strong>0.00%</strong></p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-4">
+                <h3 class="text-lg font-semibold mb-3">Sales Performance Details</h3>
+                <table class="w-full text-left border-collapse text-sm">
+                    <thead class="bg-gray-100 text-gray-600">
+                        <tr>
+                            <th class="p-2 border-b">Agent</th>
+                            <th class="p-2 border-b">Total Sales</th>
+                            <th class="p-2 border-b">Total Target Sales</th>
+                            <th class="p-2 border-b">Success Rate</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-t text-center text-gray-500">
+                            <td class="p-2" colspan="4">No data available in table</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>
