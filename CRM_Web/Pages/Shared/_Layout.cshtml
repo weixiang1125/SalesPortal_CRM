@@ -1,6 +1,7 @@
 ﻿@{
     Layout = null;
 }
+
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
@@ -79,37 +80,37 @@
             </div>
 
             <ul class="nav nav-pills flex-column">
-                <li class="nav-item"><a class="nav-link text-white" asp-controller="Dashboard" asp-action="Index"><i class="fas fa-home me-2"></i>Dashboard</a></li>
-                <li class="nav-item"><a class="nav-link text-white" asp-controller="Internal" asp-action="Chat"><i class="fas fa-comments me-2"></i>Chat</a></li>
+                <li class="nav-item"><a class="nav-link text-white" asp-page="/Dashboard"><i class="fas fa-home me-2"></i>Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link text-white" asp-page="/Chat"><i class="fas fa-comments me-2"></i>Chat</a></li>
 
                 <li class="nav-item mt-3 text-muted text-uppercase small">Sales & CRM</li>
-                <li class="nav-item"><a class="nav-link text-white" asp-controller="Contacts" asp-action="Index"><i class="fas fa-user-friends me-2"></i>Contacts</a></li>
-                <li class="nav-item"><a class="nav-link text-white" asp-controller="Deals" asp-action="Index"><i class="fas fa-box-open me-2"></i>Deals</a></li>
- 
-               
-                <div class="collapse ps-3" id="inventoryMenu">
-                <li><a class="nav-link text-white" asp-controller="Products" asp-action="Index">Products</a></li>
-                <li><a class="nav-link text-white" asp-controller="Warehouse" asp-action="Index">Warehouse</a></li>
-    </div>
+                <li class="nav-item"><a class="nav-link text-white" asp-page="/Contact"><i class="fas fa-user-friends me-2"></i>Contacts</a></li>
+                <li class="nav-item"><a class="nav-link text-white"asp-page="/Deal"><i class="fas fa-box-open me-2"></i>Deals</a></li>
 
-    <li class="nav-item mt-3 text-muted text-uppercase small">Administrator</li>
-    <li class="nav-item"><a class="nav-link text-white" data-bs-toggle="collapse" href="#adminMenu"><i class="fas fa-user-shield me-2"></i>Administrator</a></li>
-    <div class="collapse ps-3" id="adminMenu">
-        <li><a class="nav-link text-white" asp-controller="Admin" asp-action="Users">Users</a></li>
-    </div>
+                <li class="nav-item mt-3 text-muted text-uppercase small">Administrator</li>
+                <li class="nav-item">
+                    <a class="nav-link text-white" data-bs-toggle="collapse" href="#adminMenu">
+                        <i class="fas fa-user-shield me-2"></i>Administrator
+                    </a>
+                    <div class="collapse ps-3" id="adminMenu">
+                        <ul class="nav flex-column">
+                            <li class="nav-item"><a class="nav-link text-white" asp-page="/Users">Users</a></li>
+                        </ul>
+                    </div>
+                </li>
 
-    <li class="nav-item mt-3 text-muted text-uppercase small">User Profile</li>
-    <li class="nav-item"><a class="nav-link text-white" asp-controller="User" asp-action="Profile"><i class="fas fa-user me-2"></i>Profile</a></li>
-    <li class="nav-item"><a class="nav-link text-white" asp-controller="User" asp-action="Edit"><i class="fas fa-edit me-2"></i>Edit Profile</a></li>
-    <li class="nav-item"><a class="nav-link text-white" asp-controller="User" asp-action="EditCredentials"><i class="fas fa-key me-2"></i>Edit UserID & Password</a></li>
-    @* <li class="nav-item"><a class="nav-link text-white" asp-controller="Account" asp-action="Logout"><i class="fas fa-power-off me-2"></i>Sign Out</a></li> *@
-    <li class="nav-item">
-        <a href="#" class="nav-link text-white" onclick="logout()">
-            <i class="fas fa-power-off me-2"></i>Sign Out
-        </a>
-    </li>
-    </ul>
-    </nav>
+                <li class="nav-item mt-3 text-muted text-uppercase small">User Profile</li>
+                <li class="nav-item"><a class="nav-link text-white" asp-page="/Profile"><i class="fas fa-user me-2"></i>Profile</a></li>
+                <li class="nav-item"><a class="nav-link text-white" asp-page="/Edit"><i class="fas fa-edit me-2"></i>Edit Profile</a></li>
+                <li class="nav-item"><a class="nav-link text-white" asp-page="/EditCredentials"><i class="fas fa-key me-2"></i>Edit UserID & Password</a></li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link text-white" onclick="logout()">
+                        <i class="fas fa-power-off me-2"></i>Sign Out
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
 
     <!-- Main Content -->
     <div class="d-flex flex-column flex-grow-1 min-vh-100">
@@ -162,13 +163,6 @@
             document.getElementById('sidebar').classList.toggle('hidden');
         }
 
-        // Check if the token is expired immediately when the page loads
-    if (!localStorage.getItem(tokenKey) || isTokenExpired(localStorage.getItem(tokenKey))) {
-        sessionStorage.setItem("logoutReason", "Your session has expired. Please log in again.");
-        logout();  // Log out due to expired token
-    } else {
-        setTokenExpirationCheck();
-    }
 
         // Show logout warning modal
         function showLogoutWarning() {
@@ -256,6 +250,9 @@
             setTokenExpirationCheck();
         }
     </script>
+
+        @RenderSection("Scripts", required: false)
+
 
 </body>
 </html>

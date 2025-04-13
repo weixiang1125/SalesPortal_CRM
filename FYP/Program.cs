@@ -30,6 +30,16 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 builder.Services.AddAuthorization();
+
+// Add the JSON options configuration here
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
+    });
+
+
+
 // Add services to the container
 builder.Services.AddScoped<IUsersService, UsersService>();  // Register UserService
 builder.Services.AddScoped<IAuthService, AuthService>();

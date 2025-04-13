@@ -1,0 +1,259 @@
+﻿@page
+@model CRM_Web.Pages.Contacts.ContactModelPage
+@{
+    ViewData["Title"] = "Contacts";
+}
+<h2 class="mb-4">Contacts</h2>
+
+<div class="mb-3">
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createContactModal">
+        <i class="fas fa-plus"></i> Create Contact
+    </button>
+</div>
+
+@if (Model.ContactModel.Contacts != null && Model.ContactModel.Contacts.Any())
+{
+    <table id="contactsTable" class="table table-bordered table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>Contact ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Company</th>
+                <th>Status</th>
+                <th>Notes</th>
+                <th>Created Date</th>
+                <th>Updated Date</th>
+                <th>Created By</th>
+                <th>Updated By</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var contact in Model.ContactModel.Contacts)
+            {
+                <tr id="contactRow-@contact.ContactID">
+                    <td>@contact.ContactID</td>
+                    <td>@contact.Name</td>
+                    <td>@contact.Email</td>
+                    <td>@contact.Phone</td>
+                    <td>@contact.Company</td>
+                    <td>@contact.Status</td>
+                    <td>@contact.Notes</td>
+                    <td>@contact.CreatedDate?.ToString("g")</td>
+                    <td> @contact.UpdatedDate?.ToString("g") </td>
+                    <td>@contact.CreatedBy</td>
+                    <td>@contact.UpdatedBy</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary me-1 btn-edit" data-bs-toggle="modal" data-bs-target="#editContactModal" data-contactid="@contact.ContactID">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="confirmDelete('@contact.ContactID')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <div class="alert alert-info">No contacts available.</div>
+}
+
+<!-- Create Contact Modal -->
+<div class="modal fade" id="createContactModal" tabindex="-1" aria-labelledby="createContactModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="createContactForm">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create New Contact</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body row g-3">
+                    <div class="col-6">
+                        <label class="form-label">Name</label>
+                        <input class="form-control" id="Name" />
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Email</label>
+                        <input class="form-control" id="Email" type="email" />
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Phone</label>
+                        <input class="form-control" id="Phone" />
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Company</label>
+                        <input class="form-control" id="Company" />
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Status</label>
+                        <input class="form-control" id="Status" />
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" id="Notes"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">Save</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Contact Modal -->
+<div class="modal fade" id="editContactModal" tabindex="-1" aria-labelledby="editContactModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="editContactForm">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Contact</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body row g-3">
+                    <input type="hidden" id="EditContactID" />
+                    <div class="col-6">
+                        <label class="form-label">Name</label>
+                        <input class="form-control" id="EditName" />
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Email</label>
+                        <input class="form-control" id="EditEmail" type="email" />
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Phone</label>
+                        <input class="form-control" id="EditPhone" />
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Company</label>
+                        <input class="form-control" id="EditCompany" />
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Status</label>
+                        <input class="form-control" id="EditStatus" />
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" id="EditNotes"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">Save</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" />
+}
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            $('#contactsTable').DataTable();
+
+            $("#createContactForm").submit(function (e) {
+                e.preventDefault();
+
+                const formData = {
+                    Name: $("#Name").val(),
+                    Email: $("#Email").val(),
+                    Phone: $("#Phone").val(),
+                    Company: $("#Company").val(),
+                    Status: $("#Status").val(),
+                    Notes: $("#Notes").val()
+                };
+
+                $.ajax({
+                    url: 'https://localhost:44309/api/Contact/CreateContact',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(formData),
+                    success: function () {
+                        location.reload();
+                    },
+                    error: function () {
+                        alert("Error creating contact.");
+                    }
+                });
+            });
+
+            $("#editContactForm").submit(function (e) {
+                e.preventDefault();
+
+                const contactId = $("#EditContactID").val();
+                const formData = {
+                    ContactID: contactId,
+                    Name: $("#EditName").val(),
+                    Email: $("#EditEmail").val(),
+                    Phone: $("#EditPhone").val(),
+                    Company: $("#EditCompany").val(),
+                    Status: $("#EditStatus").val(),
+                    Notes: $("#EditNotes").val()
+                };
+
+                $.ajax({
+                    url: `https://localhost:44309/api/Contact/UpdateContactById/${contactId}`,
+                    type: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify(formData),
+                    success: function () {
+                        location.reload();
+                    },
+                    error: function () {
+                        alert("Error updating contact.");
+                    }
+                });
+            });
+
+            $(".btn-edit").click(function () {
+                const contactId = $(this).data("contactid");
+
+                $.ajax({
+                    url: `https://localhost:44309/api/Contact/GetContactById/${contactId}`,
+                    type: 'GET',
+                    success: function (contact) {
+                        $("#EditContactID").val(contact.contactID);
+                        $("#EditName").val(contact.name);
+                        $("#EditEmail").val(contact.email);
+                        $("#EditPhone").val(contact.phone);
+                        $("#EditCompany").val(contact.company);
+                        $("#EditStatus").val(contact.status);
+                        $("#EditNotes").val(contact.notes);
+                    },
+                    error: function () {
+                        alert("Error loading contact.");
+                    }
+                });
+            });
+        });
+
+        function confirmDelete(contactId) {
+            if (confirm("Are you sure you want to delete this contact?")) {
+                $.ajax({
+                    url: `https://localhost:44309/api/Contact/DeleteContactById/${contactId}`,
+                    type: 'DELETE',
+                    success: function () {
+                        location.reload();
+                    },
+                    error: function () {
+                        alert("Error deleting contact.");
+                    }
+                });
+            }
+        }
+    </script>
+}

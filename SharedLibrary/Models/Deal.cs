@@ -8,7 +8,7 @@ namespace SharedLibrary.Models
         public int DealID { get; set; }
         public int? ContactID { get; set; }
         public string? DealName { get; set; }
-        public float? Value { get; set; }
+        public decimal? Value { get; set; }
         public string? Stage { get; set; }
         public string? Status { get; set; }
         public DateTime? ExpectedCloseDate { get; set; }

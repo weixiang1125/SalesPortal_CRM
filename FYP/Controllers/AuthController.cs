@@ -15,7 +15,7 @@ namespace CRM_API.Controllers
         private readonly IAuthService _authService;
         private readonly IUsersService _usersService;
         private readonly string _secretKey = "NLGYHV3ja6UCoPOJBq-2ZcStWwQyMhocH_WRxeoKP5w"; // Secret key for signing JWT
-        private readonly int _expirationMinutes = 1; // JWT token expiration time
+        private readonly int _expirationMinutes = 30; // JWT token expiration time
 
         public AuthController(IAuthService authService, IUsersService usersService)
         {

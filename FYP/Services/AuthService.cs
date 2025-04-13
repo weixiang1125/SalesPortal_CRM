@@ -78,7 +78,7 @@ namespace CRM_API.Services
                 audience: _configuration["Jwt:Audience"],
                 claims: claims,
                 //expires: DateTime.Now.AddHours(1),
-                expires: DateTime.Now.AddMinutes(1),
+                expires: DateTime.Now.AddMinutes(30),
                 signingCredentials: creds
             );
 

@@ -38,13 +38,24 @@ public class DealController : ControllerBase
     [HttpPut("UpdateDealById/{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] Deal deal)
     {
-        if (id != deal.DealID) return BadRequest();
+        if (id != deal.DealID)
+        {
+            // Return a 400 Bad Request if the ID in the URL doesn't match the ID in the body
+            return BadRequest("Deal ID mismatch.");
+        }
 
         var success = await _dealService.UpdateDealAsync(deal);
-        if (!success) return NotFound();
 
+        if (!success)
+        {
+            // If the update fails (no rows affected), return a 404 Not Found
+            return NotFound("Deal not found or update failed.");
+        }
+
+        // Return a 204 No Content on successful update
         return NoContent();
     }
+
 
     [HttpDelete("DeleteDealById/{id}")]
     public async Task<IActionResult> Delete(int id)

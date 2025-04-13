@@ -33,7 +33,23 @@ namespace CRM_API.Services
 
         public async Task<bool> UpdateDealAsync(Deal deal)
         {
-            _dbContext.DBDeal.Update(deal);
+            // Check if the deal exists in the database before attempting to update
+            var existingDeal = await _dbContext.DBDeal.FindAsync(deal.DealID);
+            if (existingDeal == null)
+            {
+                // Deal not found, return false
+                return false;
+            }
+
+            // Update the properties of the existing deal
+            existingDeal.DealName = deal.DealName;
+            existingDeal.Value = deal.Value;
+            existingDeal.Stage = deal.Stage;
+            existingDeal.Status = deal.Status;
+            existingDeal.ExpectedCloseDate = deal.ExpectedCloseDate;
+            existingDeal.ContactID = deal.ContactID;
+
+            // Save the changes
             return await _dbContext.SaveChangesAsync() > 0;
         }
 

@@ -1,113 +1,270 @@
 ﻿@page
-@model ErrorModel
+@model CRM_Web.Pages.Deals.DealModelPage
 @{
-    ViewData["Title"] = "";
- }
+    ViewData["Title"] = "Deals";
+}
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Sales Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-</head>
-<body class="bg-gray-100 text-gray-800">
-    <div class="max-w-7xl mx-auto p-6 space-y-8">
+<h2 class="mb-4">Deals</h2>
 
-        <!-- Overview Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="bg-white rounded-lg shadow-md p-5">
-                <p class="text-sm text-gray-500">Total Sales (Annual)</p>
-                <p class="text-3xl font-bold text-green-600">RM 58,722,607.57</p>
-            </div>
-            <div class="bg-white rounded-lg shadow-md p-5">
-                <p class="text-sm text-gray-500">Total Outstanding (Annual)</p>
-                <p class="text-3xl font-bold text-yellow-600">RM 30,542,051.39</p>
-            </div>
-            <div class="bg-white rounded-lg shadow-md p-5">
-                <p class="text-sm text-gray-500">Total Paid (Annual)</p>
-                <p class="text-3xl font-bold text-blue-600">RM 28,180,556.18</p>
-            </div>
+<div class="mb-3">
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createDealModal">
+        <i class="fas fa-plus"></i> Create Deal
+    </button>
+</div>
+
+@if (Model.DealModel.Deals != null && Model.DealModel.Deals.Any())
+{
+    <table id="dealsTable" class="table table-bordered table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>Deal ID</th>
+                <th>Deal Name</th>
+                <th>Value</th>
+                <th>Stage</th>
+                <th>Status</th>
+                <th>Expected Close</th>
+                <th>Created Date</th>
+                <th>Updated Date</th>
+                <th>Created By</th>
+                <th>Updated By</th>
+                <th>Contact</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var deal in Model.DealModel.Deals)
+            {
+                <tr id="dealRow-@deal.DealID">
+                    <td>@deal.DealID</td>
+                    <td class="dealName">@deal.DealName</td>
+                    <td class="dealValue">@(deal.Value?.ToString("C") ?? "-")</td>
+                    <td class="dealStage">@deal.Stage</td>
+                    <td class="dealStatus">@deal.Status</td>
+                    <td class="dealCloseDate">@(deal.ExpectedCloseDate?.ToShortDateString() ?? "-")</td>
+                    <td>@deal.CreatedDate?.ToString("g")</td>
+
+                    <td>@deal.UpdatedDate?.ToString("g")</td>
+
+                    <td>@deal.CreatedBy</td>
+                    <td>@deal.UpdatedBy</td>
+                    <td>@deal.Contact?.Name</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary me-1 btn-edit" data-bs-toggle="modal" data-bs-target="#editDealModal" data-dealid="@deal.DealID">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="confirmDelete('@deal.DealID')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <div class="alert alert-info">No deals available.</div>
+}
+
+<!-- Create Deal Modal -->
+<div class="modal fade" id="createDealModal" tabindex="-1" aria-labelledby="createDealModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="createDealForm" method="post" asp-page-handler="Create">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createDealModalLabel">Create New Deal</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="DealModel.NewDeal.DealName" class="form-label">Deal Name</label>
+                        <input asp-for="DealModel.NewDeal.DealName" class="form-control" id="DealName" />
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="DealModel.NewDeal.Value" class="form-label">Value</label>
+                        <input asp-for="DealModel.NewDeal.Value" class="form-control" id="Value" type="number" />
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="DealModel.NewDeal.Stage" class="form-label">Stage</label>
+                        <input asp-for="DealModel.NewDeal.Stage" class="form-control" id="Stage" />
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="DealModel.NewDeal.Status" class="form-label">Status</label>
+                        <input asp-for="DealModel.NewDeal.Status" class="form-control" id="Status" />
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="DealModel.NewDeal.ExpectedCloseDate" class="form-label">Expected Close Date</label>
+                        <input asp-for="DealModel.NewDeal.ExpectedCloseDate" class="form-control" id="ExpectedCloseDate" type="date" />
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="DealModel.NewDeal.ContactID" class="form-label">Contact ID</label>
+                        <input asp-for="DealModel.NewDeal.ContactID" class="form-control" id="ContactID" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">Save</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
         </div>
-
-        <!-- Deal Status -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="bg-white rounded-lg shadow p-4 flex justify-between items-center">
-                <span class="text-gray-700 font-medium">Negotiation</span>
-                <button class="text-sm bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded">🔍</button>
-            </div>
-            <div class="bg-white rounded-lg shadow p-4 flex justify-between items-center">
-                <span class="text-gray-700 font-medium">Closing (Approve)</span>
-                <button class="text-sm bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded">🔍</button>
-            </div>
-            <div class="bg-white rounded-lg shadow p-4 flex justify-between items-center">
-                <span class="text-gray-700 font-medium">Deal Rate (%)</span>
-                <button class="text-sm bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded">📈</button>
-            </div>
-        </div>
-
-        <!-- Date Filter -->
-        <div class="flex items-center gap-4">
-            <input type="date" class="border border-gray-300 rounded-md p-2 shadow-sm" />
-        </div>
-
-        <!-- Customer Purchase Summary -->
-        <div>
-            <h2 class="text-2xl font-semibold mb-4">Customer Purchase Summary</h2>
-            <div class="overflow-auto bg-white rounded-lg shadow">
-                <table class="min-w-full text-left border-collapse">
-                    <thead class="bg-gray-100 text-gray-600 text-sm">
-                        <tr>
-                            <th class="p-3 border-b">Handled By</th>
-                            <th class="p-3 border-b">Company Name</th>
-                            <th class="p-3 border-b">Code</th>
-                            <th class="p-3 border-b">Total Outstanding</th>
-                            <th class="p-3 border-b">Last Purchase Amount</th>
-                            <th class="p-3 border-b">Last Purchase Date</th>
-                        </tr>
-                    </thead>
-                    <tbody class="text-sm">
-                        <tr class="border-t hover:bg-gray-50">
-                            <td class="p-3">AN MARKETING TRADING SDN BHD</td>
-                            <td class="p-3">XHNI ENERGY SMART (MALAYSIA) SDN. BHD.-LF</td>
-                            <td class="p-3">3000-X0008</td>
-                            <td class="p-3">RM 253,960.40</td>
-                            <td class="p-3">RM 139,230.00</td>
-                            <td class="p-3">15-04-2025</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Sales Performance -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-white rounded-lg shadow p-4 text-center text-gray-600 text-sm">
-                <p>Total Sales: <strong>0</strong></p>
-                <p>Target Sales: <strong>0</strong></p>
-                <p>Success Rate: <strong>0.00%</strong></p>
-            </div>
-            <div class="bg-white rounded-lg shadow p-4">
-                <h3 class="text-lg font-semibold mb-3">Sales Performance Details</h3>
-                <table class="w-full text-left border-collapse text-sm">
-                    <thead class="bg-gray-100 text-gray-600">
-                        <tr>
-                            <th class="p-2 border-b">Agent</th>
-                            <th class="p-2 border-b">Total Sales</th>
-                            <th class="p-2 border-b">Total Target Sales</th>
-                            <th class="p-2 border-b">Success Rate</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr class="border-t text-center text-gray-500">
-                            <td class="p-2" colspan="4">No data available in table</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
     </div>
-</body>
-</html>
+</div>
+
+<!-- Edit Deal Modal -->
+<div class="modal fade" id="editDealModal" tabindex="-1" aria-labelledby="editDealModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="editDealForm" method="post" asp-page-handler="Edit">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editDealModalLabel">Edit Deal</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body row g-3">
+                    <input asp-for="DealModel.DealToEdit.DealID" type="hidden" id="DealID" />
+                    <div class="col-md-6">
+                        <label asp-for="DealModel.DealToEdit.DealName" class="form-label">Deal Name</label>
+                        <input asp-for="DealModel.DealToEdit.DealName" class="form-control" id="EditDealName" />
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="DealModel.DealToEdit.Value" class="form-label">Value</label>
+                        <input asp-for="DealModel.DealToEdit.Value" class="form-control" id="EditValue" type="number" />
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="DealModel.DealToEdit.Stage" class="form-label">Stage</label>
+                        <input asp-for="DealModel.DealToEdit.Stage" class="form-control" id="EditStage" />
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="DealModel.DealToEdit.Status" class="form-label">Status</label>
+                        <input asp-for="DealModel.DealToEdit.Status" class="form-control" id="EditStatus" />
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="DealModel.DealToEdit.ExpectedCloseDate" class="form-label">Expected Close Date</label>
+                        <input asp-for="DealModel.DealToEdit.ExpectedCloseDate" class="form-control" id="EditExpectedCloseDate" type="date" />
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="DealModel.DealToEdit.ContactID" class="form-label">Contact ID</label>
+                        <input asp-for="DealModel.DealToEdit.ContactID" class="form-control" id="EditContactID" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">Save</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" />
+}
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            $('#dealsTable').DataTable({
+                paging: true,
+                searching: true,
+                lengthChange: true,
+                pageLength: 10,
+                lengthMenu: [5, 10, 25, 50, 100]
+            });
+
+            // Create Deal
+            $("#createDealForm").submit(function (e) {
+                e.preventDefault();
+
+                const formData = {
+                    DealName: $("#DealName").val(),
+                    Value: $("#Value").val(),
+                    Stage: $("#Stage").val(),
+                    Status: $("#Status").val(),
+                     ExpectedCloseDate: $("#ExpectedCloseDate").val() ? $("#ExpectedCloseDate").val() : null,  // Handle nullable date
+                    ContactID: $("#ContactID").val()
+                };
+
+                $.ajax({
+                    url: 'https://localhost:44309/api/Deal/CreateDeal',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(formData),
+                    success: function (response) {
+                        location.reload(); // Easier: reload after add
+                    },
+                    error: function () {
+                        alert("Error creating deal.");
+                    }
+                });
+            });
+
+            // Edit Deal
+            $("#editDealForm").submit(function (e) {
+                e.preventDefault();
+
+                const formData = {
+                    DealID: $("#DealID").val(),
+                    DealName: $("#EditDealName").val(),
+                    Value: $("#EditValue").val(),
+                    Stage: $("#EditStage").val(),
+                    Status: $("#EditStatus").val(),
+                    ExpectedCloseDate: $("#EditExpectedCloseDate").val() ? $("#EditExpectedCloseDate").val() : null, // Handle nullable date
+                    ContactID: $("#EditContactID").val()
+                };
+
+                $.ajax({
+                    url: `https://localhost:44309/api/Deal/UpdateDealById/${formData.DealID}`,
+                    type: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify(formData),
+                    success: function () {
+                        location.reload();
+                    },
+                    error: function () {
+                        alert("Error updating deal.");
+                    }
+                });
+            });
+
+            // Populate Edit Modal
+            $(document).on("click", ".btn-edit", function () {
+                const dealId = $(this).data("dealid");
+
+                $.ajax({
+                    url: `https://localhost:44309/api/Deal/GetDealById/${dealId}`,
+                    type: "GET",
+                    success: function (deal) {
+                        $("#DealID").val(deal.dealID);
+                        $("#EditDealName").val(deal.dealName);
+                        $("#EditValue").val(deal.value);
+                        $("#EditStage").val(deal.stage);
+                        $("#EditStatus").val(deal.status);
+                        $("#EditExpectedCloseDate").val(deal.expectedCloseDate?.split("T")[0]);
+                        $("#EditContactID").val(deal.contactID);
+                    },
+                    error: function () {
+                        alert("Error fetching deal details.");
+                    }
+                });
+            });
+        });
+
+        function confirmDelete(dealId) {
+            if (confirm("Are you sure you want to delete this deal?")) {
+                $.ajax({
+                    url: `https://localhost:44309/api/Deal/DeleteDealById/${dealId}`,
+                    type: "DELETE",
+                    success: function () {
+                        location.reload();
+                    },
+                    error: function () {
+                        alert("Error deleting deal.");
+                    }
+                });
+            }
+        }
+    </script>
+}

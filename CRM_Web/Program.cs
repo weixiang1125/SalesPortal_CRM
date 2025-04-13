@@ -1,6 +1,9 @@
+using SharedLibrary.Models;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.Configure<ApiSettings>(builder.Configuration.GetSection("ApiSettings"));
 builder.Services.AddRazorPages();
 builder.Services.AddHttpClient();
 builder.Services.AddSession(); // add this before builder.Build()
