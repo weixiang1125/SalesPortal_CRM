@@ -272,6 +272,9 @@
                     url: 'https://localhost:44309/api/Deal/CreateDeal',
                     type: 'POST',
                     contentType: 'application/json',
+                    headers:{
+                        'Authorization': 'Bearer ' + localStorage.getItem("authToken")
+                    },
                     data: JSON.stringify(formData),
                     success: function (response) {
                         location.reload(); // Easier: reload after add
@@ -300,6 +303,9 @@
                     url: `https://localhost:44309/api/Deal/UpdateDealById/${formData.DealID}`,
                     type: 'PUT',
                     contentType: 'application/json',
+                    headers:{
+                        'Authorization': 'Bearer ' + localStorage.getItem("authToken")
+                    },
                     data: JSON.stringify(formData),
                     success: function () {
                         location.reload();
@@ -317,6 +323,9 @@
                 $.ajax({
                     url: `https://localhost:44309/api/Deal/GetDealById/${dealId}`,
                     type: "GET",
+                    headers:{
+                        'Authorization': 'Bearer ' + localStorage.getItem("authToken")
+                    },
                     success: function (deal) {
                         $("#DealID").val(deal.dealID);
                         $("#EditDealName").val(deal.dealName);
@@ -338,6 +347,9 @@
                 $.ajax({
                     url: `https://localhost:44309/api/Deal/DeleteDealById/${dealId}`,
                     type: "DELETE",
+                    headers:{
+                        'Authorization': 'Bearer ' + localStorage.getItem("authToken")
+                    },
                     success: function () {
                         location.reload();
                     },

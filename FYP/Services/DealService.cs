@@ -31,7 +31,7 @@ namespace CRM_API.Services
             return deal;
         }
 
-        public async Task<bool> UpdateDealAsync(Deal deal)
+        public async Task<bool> UpdateDealAsync(Deal deal, int userId)
         {
             // Check if the deal exists in the database before attempting to update
             var existingDeal = await _dbContext.DBDeal.FindAsync(deal.DealID);
@@ -48,6 +48,9 @@ namespace CRM_API.Services
             existingDeal.Status = deal.Status;
             existingDeal.ExpectedCloseDate = deal.ExpectedCloseDate;
             existingDeal.ContactID = deal.ContactID;
+
+            existingDeal.UpdatedDate = DateTime.UtcNow;
+            existingDeal.UpdatedBy = userId;
 
             // Save the changes
             return await _dbContext.SaveChangesAsync() > 0;

@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SharedLibrary.Models;
+using System.Security.Claims;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -22,6 +23,7 @@ public class DealController : ControllerBase
         return Ok(deals);
     }
 
+    [Authorize]
     [HttpGet("GetDealById/{id}")]
     public async Task<IActionResult> GetById(int id)
     {
@@ -30,13 +32,20 @@ public class DealController : ControllerBase
         return Ok(deal);
     }
 
+    [Authorize]
     [HttpPost("CreateDeal")]
     public async Task<IActionResult> Create([FromBody] Deal deal)
     {
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+        deal.CreatedDate = DateTime.UtcNow;
+        deal.CreatedBy = userId;
+
         var created = await _dealService.CreateDealAsync(deal);
         return CreatedAtAction(nameof(GetById), new { id = created.DealID }, created);
     }
 
+    [Authorize]
     [HttpPut("UpdateDealById/{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] Deal deal)
     {
@@ -45,8 +54,8 @@ public class DealController : ControllerBase
             // Return a 400 Bad Request if the ID in the URL doesn't match the ID in the body
             return BadRequest("Deal ID mismatch.");
         }
-
-        var success = await _dealService.UpdateDealAsync(deal);
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        var success = await _dealService.UpdateDealAsync(deal, userId);
 
         if (!success)
         {
@@ -58,7 +67,7 @@ public class DealController : ControllerBase
         return NoContent();
     }
 
-
+    [Authorize]
     [HttpDelete("DeleteDealById/{id}")]
     public async Task<IActionResult> Delete(int id)
     {
