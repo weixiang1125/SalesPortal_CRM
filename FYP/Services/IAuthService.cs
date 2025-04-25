@@ -6,6 +6,6 @@
         Task<string?> LoginAsync(string username, string password);
 
         // Method to register a new user and return a success flag (true/false)
-        Task<bool> RegisterAsync(string username, string password, string? email, string? phone);
+        Task<bool> RegisterAsync(string username, string password, string? email, string? phone, string? role);
     }
 }

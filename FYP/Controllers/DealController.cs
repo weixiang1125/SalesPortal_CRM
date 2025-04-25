@@ -1,4 +1,5 @@
 ﻿using CRM_API.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SharedLibrary.Models;
 
@@ -13,6 +14,7 @@ public class DealController : ControllerBase
         _dealService = dealService;
     }
 
+    [Authorize]
     [HttpGet("GetAllDeal")]
     public async Task<IActionResult> GetAll()
     {

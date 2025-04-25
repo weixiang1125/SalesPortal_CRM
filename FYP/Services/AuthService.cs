@@ -32,7 +32,7 @@ namespace CRM_API.Services
             return GenerateJwtToken(user);
         }
 
-        public async Task<bool> RegisterAsync(string username, string password, string? email, string? phone)
+        public async Task<bool> RegisterAsync(string username, string password, string? email, string? phone, string? role)
         {
             var existingUser = await _usersService.GetUserByUsernameAsync(username);
             if (existingUser != null)
@@ -48,7 +48,8 @@ namespace CRM_API.Services
                 Password = hashedPassword,
                 Email = email,
                 Phone = phone,
-                CreatedDate = DateTime.UtcNow
+                CreatedDate = DateTime.UtcNow,
+                Role = string.IsNullOrEmpty(role) ? "User" : role
             };
 
             _dbContext.DBUsers.Add(newUser);
@@ -67,7 +68,7 @@ namespace CRM_API.Services
             {
                 new Claim(ClaimTypes.Name, user.Username),
                 new Claim(ClaimTypes.NameIdentifier, user.UserID.ToString()),
-                // new Claim(ClaimTypes.Role, user.Role) // Add this if needed
+                new Claim(ClaimTypes.Role, user.Role) // Add this if needed
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Secret"]));

@@ -12,59 +12,116 @@
     </button>
 </div>
 
-@if (Model.DealModel.Deals != null && Model.DealModel.Deals.Any())
-{
-    <table id="dealsTable" class="table table-bordered table-striped">
-        <thead class="table-dark">
-            <tr>
-                <th>Deal ID</th>
-                <th>Deal Name</th>
-                <th>Value</th>
-                <th>Stage</th>
-                <th>Status</th>
-                <th>Expected Close</th>
-                <th>Created Date</th>
-                <th>Updated Date</th>
-                <th>Created By</th>
-                <th>Updated By</th>
-                <th>Contact</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var deal in Model.DealModel.Deals)
-            {
-                <tr id="dealRow-@deal.DealID">
-                    <td>@deal.DealID</td>
-                    <td class="dealName">@deal.DealName</td>
-                    <td class="dealValue">@(deal.Value?.ToString("C") ?? "-")</td>
-                    <td class="dealStage">@deal.Stage</td>
-                    <td class="dealStatus">@deal.Status</td>
-                    <td class="dealCloseDate">@(deal.ExpectedCloseDate?.ToShortDateString() ?? "-")</td>
-                    <td>@deal.CreatedDate?.ToString("g")</td>
+<div class="mb-3">
+    <button id="toggleViewBtn" class="btn btn-secondary">
+        <i class="fas fa-columns"></i> Switch to Kanban View
+    </button>
+</div>
 
-                    <td>@deal.UpdatedDate?.ToString("g")</td>
-
-                    <td>@deal.CreatedBy</td>
-                    <td>@deal.UpdatedBy</td>
-                    <td>@deal.Contact?.Name</td>
-                    <td>
-                        <button class="btn btn-sm btn-primary me-1 btn-edit" data-bs-toggle="modal" data-bs-target="#editDealModal" data-dealid="@deal.DealID">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn btn-sm btn-danger" onclick="confirmDelete('@deal.DealID')">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </td>
+<div id ="tableView">
+    @if (Model.DealModel.Deals != null && Model.DealModel.Deals.Any())
+    {
+        <table id="dealsTable" class="table table-bordered table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>Deal ID</th>
+                    <th>Deal Name</th>
+                    <th>Value</th>
+                    <th>Stage</th>
+                    <th>Status</th>
+                    <th>Expected Close</th>
+                    <th>Created Date</th>
+                    <th>Updated Date</th>
+                    <th>Created By</th>
+                    <th>Updated By</th>
+                    <th>Contact</th>
+                    <th>Actions</th>
                 </tr>
-            }
-        </tbody>
-    </table>
-}
-else
-{
-    <div class="alert alert-info">No deals available.</div>
-}
+            </thead>
+            <tbody>
+                @foreach (var deal in Model.DealModel.Deals)
+                {
+                    <tr id="dealRow-@deal.DealID">
+                        <td>@deal.DealID</td>
+                        <td class="dealName">@deal.DealName</td>
+                        <td class="dealValue">@(deal.Value?.ToString("C") ?? "-")</td>
+                        <td class="dealStage">@deal.Stage</td>
+                        <td class="dealStatus">@deal.Status</td>
+                        <td class="dealCloseDate">@(deal.ExpectedCloseDate?.ToShortDateString() ?? "-")</td>
+                        <td>@deal.CreatedDate?.ToString("g")</td>
+
+                        <td>@deal.UpdatedDate?.ToString("g")</td>
+
+                        <td>@deal.CreatedBy</td>
+                        <td>@deal.UpdatedBy</td>
+                        <td>@deal.Contact?.Name</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary me-1 btn-edit" data-bs-toggle="modal" data-bs-target="#editDealModal" data-dealid="@deal.DealID">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="confirmDelete('@deal.DealID')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <div class="alert alert-info">No deals available.</div>
+    }
+
+</div>
+
+<!-- Kanban View -->
+<div id="kanbanView" class="mt-3" style="display: none;">
+    @{
+        var stages = new[] { "Proposal", "Negotiation", "Closing", "Retention" };
+    }
+
+    <div class="row g-4">
+        @foreach (var stage in stages)
+        {
+            <div class="col-md-3">
+                <div class="card border-dark shadow-sm h-100">
+                    <div class="card-header bg-dark text-white">
+                        <strong>@stage</strong>
+                    </div>
+                    <div class="card-body" style="min-height: 300px;">
+                        @if (Model.DealModel.Deals != null && Model.DealModel.Deals.Any(d => d.Stage == stage))
+                        {
+                            foreach (var deal in Model.DealModel.Deals.Where(d => d.Stage == stage))
+                            {
+                                <div class="card mb-3 border-primary deal-card" id="dealCard-@deal.DealID">
+                                    <div class="card-body p-2">
+                                        <h6 class="card-title mb-1">@deal.DealName</h6>
+                                        <p class="mb-1"><strong>Value:</strong> @(deal.Value?.ToString("C") ?? "-")</p>
+                                        <p class="mb-1"><strong>Status:</strong> @deal.Status</p>
+                                        <p class="mb-1"><strong>Contact:</strong> @deal.Contact?.Name</p>
+                                        <div class="d-flex justify-content-end">
+                                            <button class="btn btn-sm btn-primary me-1 btn-edit" data-bs-toggle="modal" data-bs-target="#editDealModal" data-dealid="@deal.DealID">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" onclick="confirmDelete('@deal.DealID')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <p class="text-muted">No deals</p>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
 
 <!-- Create Deal Modal -->
 <div class="modal fade" id="createDealModal" tabindex="-1" aria-labelledby="createDealModalLabel" aria-hidden="true">
@@ -157,12 +214,20 @@ else
 
 @section Styles {
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" />
+    <style>
+        .deal-card:hover {
+            background-color: #f8f9fa;
+            cursor: grab;
+        }
+    </style>
 }
+
 
 @section Scripts {
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
     <script>
         $(document).ready(function () {
@@ -173,6 +238,22 @@ else
                 pageLength: 10,
                 lengthMenu: [5, 10, 25, 50, 100]
             });
+
+            $("#toggleViewBtn").click(function () {
+                const tableView = $("#tableView");
+                const kanbanView = $("#kanbanView");
+
+                if (tableView.is(":visible")) {
+                    tableView.hide();
+                    kanbanView.show();
+                    $(this).html('<i class="fas fa-table"></i> Switch to Table View');
+                } else {
+                    kanbanView.hide();
+                    tableView.show();
+                    $(this).html('<i class="fas fa-columns"></i> Switch to Kanban View');
+                }
+            });
+
 
             // Create Deal
             $("#createDealForm").submit(function (e) {

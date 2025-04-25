@@ -28,12 +28,13 @@ namespace CRM_API.Controllers
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
             // Delegate the registration logic to the service
-            var success = await _authService.RegisterAsync(request.Username, request.Password, request.Email, request.Phone);
+            var success = await _authService.RegisterAsync(request.Username, request.Password, request.Email, request.Phone, request.Role);
 
             if (!success)
             {
                 return BadRequest("Username already exists.");
             }
+
 
             return Ok(new { Message = "User registered successfully." });  // Return more structured response
         }

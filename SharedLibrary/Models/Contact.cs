@@ -12,9 +12,9 @@ namespace SharedLibrary.Models
         public string? Company { get; set; }
         public string? Notes { get; set; }
         public DateTime? CreatedDate { get; set; }
-        public string? CreatedBy { get; set; }
+        public int? CreatedBy { get; set; }
         public DateTime? UpdatedDate { get; set; }
-        public string? UpdatedBy { get; set; }
+        public int? UpdatedBy { get; set; }
         public string? Status { get; set; }
 
         public ICollection<Deal>? Deals { get; set; }
