@@ -271,11 +271,11 @@
                 $.ajax({
                     url: 'https://localhost:44309/api/Deal/CreateDeal',
                     type: 'POST',
-                    contentType: 'application/json',
-                    headers:{
-                        'Authorization': 'Bearer ' + localStorage.getItem("authToken")
-                    },
+                    contentType: 'application/json',                 
                     data: JSON.stringify(formData),
+                    xhrFields: {
+                        withCredentials: true
+                    },
                     success: function (response) {
                         location.reload(); // Easier: reload after add
                     },

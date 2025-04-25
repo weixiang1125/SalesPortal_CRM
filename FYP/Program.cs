@@ -1,5 +1,6 @@
 using CRM_API.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.CookiePolicy;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using SharedLibrary;
@@ -48,17 +49,18 @@ builder.Services.AddScoped<IDealService, DealService>();
 
 builder.Services.AddControllers();
 
-// Add CORS support
+// Update CORS policy
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowLocalhost",
-        builder =>
-        {
-            builder.WithOrigins("https://localhost:44373")  // Allow the frontend domain
-                .AllowAnyMethod()  // Allow any HTTP method (GET, POST, etc.)
-                .AllowAnyHeader();  // Allow any header
-        });
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("https://localhost:44373") // Your frontend URL
+              .AllowCredentials()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
 });
+
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -66,7 +68,15 @@ builder.Services.AddSwaggerGen();
 var app = builder.Build();
 
 
-app.UseCors("AllowLocalhost");
+app.UseCors("AllowFrontend");
+
+// Add this after UseCors()
+app.UseCookiePolicy(new CookiePolicyOptions
+{
+    MinimumSameSitePolicy = SameSiteMode.None,
+    HttpOnly = HttpOnlyPolicy.Always,
+    Secure = CookieSecurePolicy.Always
+});
 
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
@@ -76,7 +86,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.UseCookiePolicy();
 // Enable Authentication middleware
 app.UseAuthentication(); // Add this line to enable JWT Authentication
 

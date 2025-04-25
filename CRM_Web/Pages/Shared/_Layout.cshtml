@@ -131,124 +131,29 @@
         </main>
     </div>
 
-    <!-- Modal for Token Expiry Warning -->
-    <div class="modal" tabindex="-1" id="logoutWarningModal">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Session Expiring Soon</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <p>Your session will expire in 30 seconds. Do you want to stay logged in?</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="refreshSession()">Stay Logged In</button>
-                    <button type="button" class="btn btn-danger" onclick="logout()">Log Out</button>
-                </div>
-            </div>
-        </div>
-    </div>
+
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        const tokenKey = "authToken";
-        const refreshTokenKey = "refreshToken";
-        let modalShown = false;
-        let expirationCheckInterval;
-
-        // Toggle Sidebar
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('hidden');
-        }
-
-
-        // Show logout warning modal
-        function showLogoutWarning() {
-            const modal = new bootstrap.Modal(document.getElementById('logoutWarningModal'));
-            modal.show();
-        }
-
-        // Check if JWT token is expired
-        function isTokenExpired(token) {
-            if (!token) return true;
-            try {
-                const payload = JSON.parse(atob(token.split('.')[1]));
-                const currentTime = Math.floor(Date.now() / 1000);
-                return payload.exp < currentTime;
-            } catch (e) {
-                console.error("Token decode failed:", e);
-                return true;
+           // Toggle Sidebar
+            function toggleSidebar() {
+                document.getElementById('sidebar').classList.toggle('hidden');
             }
-        }
 
-        // Log out the user
-        function logout() {
-            console.log("Logging out...");
-      
-            localStorage.removeItem(tokenKey);
-            localStorage.removeItem(refreshTokenKey);
-            window.location.href = "/Login";
-        }
-
-        // Refresh the session using refresh token
-        function refreshSession() {
-            const token = localStorage.getItem(tokenKey);
-            const refreshToken = localStorage.getItem(refreshTokenKey);
-
-            if (token && refreshToken && !isTokenExpired(token)) {
-                fetch("https://localhost:44309/api/Auth/refresh-token", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ token, refreshToken })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.token) {
-                        localStorage.setItem(tokenKey, data.token);
-                        if (data.refreshToken) {
-                            localStorage.setItem(refreshTokenKey, data.refreshToken);
-                        }
-
-                        const modal = bootstrap.Modal.getInstance(document.getElementById('logoutWarningModal'));
-                        if (modal) modal.hide();
-                        modalShown = false;
-                        setTokenExpirationCheck();
-                    } else {
-                        logout();
-                    }
-                })
-                .catch(() => logout());
+            // Log out the user
+            function logout() {
+                const btn = event.target;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging out...';
+                fetch('https://localhost:44309/api/Auth/logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                }).finally(() => {
+                    window.location.href = "/Login";
+                });
             }
-        }
 
-        // Setup interval to check token expiration
-        function setTokenExpirationCheck() {
-            clearInterval(expirationCheckInterval);
-            expirationCheckInterval = setInterval(() => {
-                const token = localStorage.getItem(tokenKey);
-                if (token && !isTokenExpired(token)) {
-                    const payload = JSON.parse(atob(token.split('.')[1]));
-                    const expirationTime = payload.exp;
-                    const currentTime = Math.floor(Date.now() / 1000);
 
-                    if (expirationTime - currentTime <= 30 && !modalShown) {
-                        showLogoutWarning();
-                        modalShown = true;
-                    }
-                }
-            }, 5000);
-        }
-
-        // Immediate logout if token already expired
-        if (!localStorage.getItem(tokenKey) || isTokenExpired(localStorage.getItem(tokenKey))) {
-            logout();
-        } else {
-            setTokenExpirationCheck();
-        }
     </script>
 
         @RenderSection("Scripts", required: false)

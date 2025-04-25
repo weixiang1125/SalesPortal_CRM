@@ -122,52 +122,38 @@
 </html>
 
 <script>
-    document.getElementById('loginForm').addEventListener('submit', function(event) {
-        event.preventDefault(); // Prevent the form from submitting normally
+       document.getElementById('loginForm').addEventListener('submit', function(event) {
+        event.preventDefault();
 
-        // Get form data
-        const username = document.getElementById('username').value.trim();
-        const password = document.getElementById('password').value.trim();
-
-
-        // Prepare the data to send
-        const loginData = {
-            username: username,
-            password: password
-        };
-
-        // Send the data using Fetch API
-        fetch('https://localhost:44309/api/Auth/login', {  // Adjust the URL to match your backend endpoint
+        fetch('https://localhost:44309/api/Auth/login', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(loginData)
+            credentials: 'include', // THIS IS CRUCIAL
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: document.getElementById('username').value.trim(),
+                password: document.getElementById('password').value.trim()
+            })
         })
         .then(async response => {
             if (response.ok) {
-                const data = await response.json();
-                localStorage.setItem('authToken', data.token);
                 window.location.href = 'https://localhost:44373/Dashboard';
             } else {
-                // Show error message from API if any
-                const errorData = await response.json().catch(() => ({}));
-                const errorMsg = errorData.message || "Login failed. Please check your username and password.";
-                document.getElementById('loginError').style.display = 'block';
-                document.getElementById('loginError').textContent = errorMsg;
+                const error = await response.json().catch(() => ({}));
+                showError(error.message || "Login failed");
             }
         })
-        .catch(error => {
-            console.error('Error:', error);
-            document.getElementById('loginError').style.display = 'block';
-            document.getElementById('loginError').textContent = 'Something went wrong. Please try again later.';
-        });
+        .catch(() => showError("Network error"));
     });
 
-    const reason = sessionStorage.getItem("logoutReason");
-    if (reason) {
-        document.getElementById("loginError").textContent = reason;
-        document.getElementById("loginError").style.display = "block";
-        sessionStorage.removeItem("logoutReason");
+    // Helper function
+    function showError(message) {
+        const el = document.getElementById('loginError');
+        el.style.display = 'block';
+        el.textContent = message;
     }
+
+    // Logout reason handling (unchanged)
+    const reason = sessionStorage.getItem("logoutReason");
+    if (reason) showError(reason);
+    sessionStorage.removeItem("logoutReason");
 </script>

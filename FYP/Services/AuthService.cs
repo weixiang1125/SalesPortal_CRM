@@ -62,13 +62,21 @@ namespace CRM_API.Services
             return BCrypt.Net.BCrypt.Verify(password, storedPassword);
         }
 
-        private string GenerateJwtToken(Users user)
+        public (string Token, DateTime Expiry) GenerateJwtTokenWithExpiry(Users user)
+        {
+            var expiry = DateTime.Now.AddMinutes(30);
+            var token = GenerateJwtToken(user, expiry); // Modified version (see below)
+            return (token, expiry);
+        }
+
+        // Modified token generator
+        private string GenerateJwtToken(Users user, DateTime? customExpiry = null)
         {
             var claims = new[]
             {
                 new Claim(ClaimTypes.Name, user.Username),
                 new Claim(ClaimTypes.NameIdentifier, user.UserID.ToString()),
-                new Claim(ClaimTypes.Role, user.Role) // Add this if needed
+                new Claim(ClaimTypes.Role, user.Role)
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Secret"]));
@@ -78,8 +86,7 @@ namespace CRM_API.Services
                 issuer: _configuration["Jwt:Issuer"],
                 audience: _configuration["Jwt:Audience"],
                 claims: claims,
-                //expires: DateTime.Now.AddHours(1),
-                expires: DateTime.Now.AddMinutes(30),
+                expires: customExpiry ?? DateTime.Now.AddMinutes(30), // Flexible expiry
                 signingCredentials: creds
             );
 

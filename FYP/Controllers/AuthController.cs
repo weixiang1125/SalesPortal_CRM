@@ -14,13 +14,15 @@ namespace CRM_API.Controllers
     {
         private readonly IAuthService _authService;
         private readonly IUsersService _usersService;
+        private readonly IConfiguration _configuration;
         private readonly string _secretKey = "NLGYHV3ja6UCoPOJBq-2ZcStWwQyMhocH_WRxeoKP5w"; // Secret key for signing JWT
         private readonly int _expirationMinutes = 30; // JWT token expiration time
 
-        public AuthController(IAuthService authService, IUsersService usersService)
+        public AuthController(IAuthService authService, IUsersService usersService, IConfiguration configuration)
         {
             _authService = authService;
             _usersService = usersService;
+            _configuration = configuration;
         }
 
         // POST api/account/register
@@ -44,13 +46,31 @@ namespace CRM_API.Controllers
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             var token = await _authService.LoginAsync(request.Username, request.Password);
+            if (token == null) return Unauthorized();
 
-            if (string.IsNullOrEmpty(token))
-            {
-                return Unauthorized("Invalid username or password.");
-            }
+            Response.Cookies.Append(
+                _configuration["Jwt:CookieName"] ?? "authToken",
+                token,
+                new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.None,
+                    Expires = DateTime.UtcNow.AddMinutes(_expirationMinutes),
+                    Path = "/", // fine
+                    IsEssential = true
+                    // REMOVE Domain = "localhost"
+                });
 
-            return Ok(new { Token = token });
+            return Ok(new { Message = "Login successful" });
+        }
+
+
+        [HttpPost("logout")]
+        public IActionResult Logout()
+        {
+            Response.Cookies.Delete("authToken");
+            return Ok(new { Message = "Logged out" });
         }
 
         // POST api/auth/refresh-token
