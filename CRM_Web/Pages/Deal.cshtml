@@ -303,8 +303,8 @@
                     url: `https://localhost:44309/api/Deal/UpdateDealById/${formData.DealID}`,
                     type: 'PUT',
                     contentType: 'application/json',
-                    headers:{
-                        'Authorization': 'Bearer ' + localStorage.getItem("authToken")
+                    xhrFields: {
+                        withCredentials: true  // Ensures cookies are sent
                     },
                     data: JSON.stringify(formData),
                     success: function () {
@@ -323,8 +323,8 @@
                 $.ajax({
                     url: `https://localhost:44309/api/Deal/GetDealById/${dealId}`,
                     type: "GET",
-                    headers:{
-                        'Authorization': 'Bearer ' + localStorage.getItem("authToken")
+                    xhrFields: {
+                        withCredentials: true  // Ensures cookies are sent
                     },
                     success: function (deal) {
                         $("#DealID").val(deal.dealID);
@@ -347,8 +347,8 @@
                 $.ajax({
                     url: `https://localhost:44309/api/Deal/DeleteDealById/${dealId}`,
                     type: "DELETE",
-                    headers:{
-                        'Authorization': 'Bearer ' + localStorage.getItem("authToken")
+                    xhrFields: {
+                        withCredentials: true  // Ensures cookies are sent
                     },
                     success: function () {
                         location.reload();
