@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Newtonsoft.Json;
 using SharedLibrary.Models;
+using System.Net;
+using System.Net.Http.Headers;
 
 namespace CRM_Web.Pages.Contacts
 {
@@ -21,18 +23,49 @@ namespace CRM_Web.Pages.Contacts
 
         public async Task<IActionResult> OnGetAsync()
         {
-            var client = _httpClientFactory.CreateClient();
-            var apiUrl = _configuration["ApiSettings:BaseUrl"] + "api/Contact/GetAllContacts";
+            // 1. Get token from HTTP-only cookie
+            var token = Request.Cookies["authToken"];
 
-            var response = await client.GetAsync(apiUrl);
-            if (response.IsSuccessStatusCode)
+            if (string.IsNullOrEmpty(token))
             {
-                var json = await response.Content.ReadAsStringAsync();
-                ContactModel.Contacts = JsonConvert.DeserializeObject<List<Contact>>(json) ?? new();
+                // Token not found - redirect to login
+                return RedirectToPage("/Login");
             }
-            else
+
+            // 2. Create HTTP client and set up request
+            var client = _httpClientFactory.CreateClient();
+            var apiUrl = _configuration["ApiSettings:BaseUrl"] + "api/Contact/GetContactsByUserId";  // Adjusted to use user-specific endpoint
+
+            // 3. Add authorization header
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            try
             {
-                ContactModel.Contacts = new();
+                // 4. Make API call
+                var response = await client.GetAsync(apiUrl);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var jsonString = await response.Content.ReadAsStringAsync();
+                    ContactModel.Contacts = JsonConvert.DeserializeObject<List<Contact>>(jsonString) ?? new List<Contact>();
+                }
+                else if (response.StatusCode == HttpStatusCode.Unauthorized)
+                {
+                    // Token expired or invalid - redirect to login
+                    return RedirectToPage("/Login");
+                }
+                else
+                {
+                    // Handle other errors
+                    ContactModel.Contacts = new List<Contact>();
+                    // Consider logging the error or showing a user-friendly message
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle network errors
+                ContactModel.Contacts = new List<Contact>();
+                // Consider logging the exception for debugging purposes
             }
 
             return Page();

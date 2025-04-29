@@ -34,7 +34,7 @@ namespace CRM_Web.Pages.Deals
 
             // 2. Create HTTP client and set up request
             var client = _httpClientFactory.CreateClient();
-            string apiUrl = _configuration["ApiSettings:BaseUrl"] + "api/Deal/GetAllDeal";
+            string apiUrl = _configuration["ApiSettings:BaseUrl"] + "api/Deal/GetDealByUserId";
 
             // 3. Add authorization header
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);

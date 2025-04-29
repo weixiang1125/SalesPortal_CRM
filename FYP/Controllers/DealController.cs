@@ -1,4 +1,5 @@
-﻿using CRM_API.Services;
+﻿using CRM_API.Controllers;
+using CRM_API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SharedLibrary.Models;
@@ -6,14 +7,33 @@ using System.Security.Claims;
 
 [ApiController]
 [Route("api/[controller]")]
-public class DealController : ControllerBase
+public class DealController : BaseController
 {
     private readonly IDealService _dealService;
+    private readonly IUsersService _usersService;
 
-    public DealController(IDealService dealService)
+    public DealController(IDealService dealService, IUsersService usersService)
     {
         _dealService = dealService;
+        _usersService = usersService;
     }
+
+    [Authorize]
+    [HttpGet("GetDealByUserId")]
+    public async Task<ActionResult<IEnumerable<Deal>>> GetDealByUserId()
+    {
+        if (IsAdmin)
+        {
+            var allDeals = await _dealService.GetAllDealAsync();
+            return Ok(allDeals);
+        }
+        else
+        {
+            var userDeals = await _dealService.GetDealsByUserIdAsync(CurrentUserId);
+            return Ok(userDeals);
+        }
+    }
+
 
     [Authorize]
     [HttpGet("GetAllDeal")]
@@ -41,7 +61,7 @@ public class DealController : ControllerBase
         deal.CreatedDate = DateTime.UtcNow;
         deal.CreatedBy = userId;
 
-        var created = await _dealService.CreateDealAsync(deal);
+        var created = await _dealService.CreateDealAsync(deal, userId);
         return CreatedAtAction(nameof(GetById), new { id = created.DealID }, created);
     }
 

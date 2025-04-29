@@ -24,8 +24,19 @@ namespace CRM_API.Services
                                            .FirstOrDefaultAsync(d => d.DealID == id);
         }
 
-        public async Task<Deal> CreateDealAsync(Deal deal)
+        public async Task<IEnumerable<Deal>> GetDealsByUserIdAsync(int userId)
         {
+            return await _dbContext.DBDeal
+                .Include(d => d.Contact)
+                .Where(d => d.CreatedBy == userId)
+                .ToListAsync();
+        }
+
+        public async Task<Deal> CreateDealAsync(Deal deal, int userId)
+        {
+            deal.CreatedDate = DateTime.UtcNow;
+            deal.CreatedBy = userId;
+
             _dbContext.DBDeal.Add(deal);
             await _dbContext.SaveChangesAsync();
             return deal;

@@ -1,10 +1,12 @@
-﻿using CRM_API.Services;
+﻿using CRM_API.Controllers;
+using CRM_API.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SharedLibrary.Models;
 
 [ApiController]
 [Route("api/[controller]")]
-public class ContactController : ControllerBase
+public class ContactController : BaseController
 {
     private readonly IContactService _contactService;
 
@@ -13,13 +15,32 @@ public class ContactController : ControllerBase
         _contactService = contactService;
     }
 
+    [Authorize]
+    [HttpGet("GetContactsByUserId")]
+    public async Task<ActionResult<IEnumerable<Contact>>> GetContactsByUserId()
+    {
+        if (IsAdmin)
+        {
+            var allContacts = await _contactService.GetAllContactsAsync();
+            return Ok(allContacts);
+        }
+        else
+        {
+            var userContacts = await _contactService.GetContactsByUserIdAsync(CurrentUserId);
+            return Ok(userContacts);
+        }
+    }
+
+
+
+    [Authorize]
     [HttpGet("GetAllContacts")]
     public async Task<IActionResult> GetAllContacts()
     {
         var contacts = await _contactService.GetAllContactsAsync();
         return Ok(contacts);
     }
-
+    [Authorize]
     [HttpGet("GetContactById/{id}")]
     public async Task<IActionResult> GetContactById(int id)
     {
@@ -27,25 +48,28 @@ public class ContactController : ControllerBase
         if (contact == null) return NotFound();
         return Ok(contact);
     }
-
+    [Authorize]
     [HttpPost("CreateContact")]
     public async Task<IActionResult> CreateContact([FromBody] Contact contact)
     {
-        var created = await _contactService.CreateContactAsync(contact);
+        var userId = CurrentUserId;  // Get the userId from the JWT token
+        var created = await _contactService.CreateContactAsync(contact, userId);
         return CreatedAtAction(nameof(GetContactById), new { id = created.ContactID }, created);
     }
 
+    [Authorize]
     [HttpPut("UpdateContactById/{id}")]
     public async Task<IActionResult> UpdateContactById(int id, [FromBody] Contact contact)
     {
         if (id != contact.ContactID) return BadRequest();
 
-        var success = await _contactService.UpdateContactAsync(contact);
+        var userId = CurrentUserId;  // Get the userId from the JWT token
+        var success = await _contactService.UpdateContactAsync(contact, userId);
         if (!success) return NotFound();
 
         return NoContent();
     }
-
+    [Authorize]
     [HttpDelete("DeleteContactById/{id}")]
     public async Task<IActionResult> DeleteContactById(int id)
     {
