@@ -150,8 +150,12 @@
 
             // Log out the user
             function logout() {
+                 if (!confirm("Are you sure you want to log out?")) return;
+
                 const btn = event.target;
                 btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging out...';
+                sessionStorage.clear();
+                localStorage.clear();
                 fetch('https://localhost:44309/api/Auth/logout', {
                     method: 'POST',
                     credentials: 'include'

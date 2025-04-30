@@ -18,7 +18,7 @@
     </button>
 </div>
 
-<div id ="tableView">
+<div id="tableView">
     @if (Model.DealModel.Deals != null && Model.DealModel.Deals.Any())
     {
         <table id="dealsTable" class="table table-bordered table-striped">
@@ -31,8 +31,8 @@
                     <th>Status</th>
                     <th>Expected Close</th>
                     <th>Created Date</th>
-                    <th>Updated Date</th>
                     <th>Created By</th>
+                    <th>Updated Date</th>         
                     <th>Updated By</th>
                     <th>Contact</th>
                     <th>Actions</th>
@@ -49,10 +49,8 @@
                         <td class="dealStatus">@deal.Status</td>
                         <td class="dealCloseDate">@(deal.ExpectedCloseDate?.ToShortDateString() ?? "-")</td>
                         <td>@deal.CreatedDate?.ToString("g")</td>
-
-                        <td>@deal.UpdatedDate?.ToString("g")</td>
-
                         <td>@deal.CreatedBy</td>
+                        <td>@deal.UpdatedDate?.ToString("g")</td>                        
                         <td>@deal.UpdatedBy</td>
                         <td>@deal.Contact?.Name</td>
                         <td>
@@ -72,7 +70,6 @@
     {
         <div class="alert alert-info">No deals available.</div>
     }
-
 </div>
 
 <!-- Kanban View -->
@@ -228,17 +225,42 @@
     <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
 
     <script>
         $(document).ready(function () {
+            const userRole = sessionStorage.getItem("role");
+            console.log(userRole);
+            // Hide admin-only columns if the user is not an Admin
+            if (userRole !== "Admin") {
+                // Hide admin-only columns
+                $('#dealsTable th:nth-child(7), #dealsTable th:nth-child(8), #dealsTable th:nth-child(9), #dealsTable th:nth-child(10)').hide();
+                $('#dealsTable td:nth-child(7), #dealsTable td:nth-child(8), #dealsTable td:nth-child(9), #dealsTable td:nth-child(10)').hide();
+            }
+
+            // Initialize DataTables
             $('#dealsTable').DataTable({
                 paging: true,
                 searching: true,
                 lengthChange: true,
                 pageLength: 10,
-                lengthMenu: [5, 10, 25, 50, 100]
+                lengthMenu: [5, 10, 25, 50, 100],
+                columnDefs: [{
+                    targets: 0, // First column (index 0)
+                    searchable: false,
+                    orderable: false
+                }],
+                order: [[1, 'asc']], // Order by Deal Name column instead of index
+                drawCallback: function (settings) {
+                    let api = this.api();
+                    api.column(0, { page: 'current' }).nodes().each(function (cell, i) {
+                        cell.innerHTML = i + 1;
+                    });
+                }
             });
 
+           
             $("#toggleViewBtn").click(function () {
                 const tableView = $("#tableView");
                 const kanbanView = $("#kanbanView");
