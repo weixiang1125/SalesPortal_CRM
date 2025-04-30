@@ -24,8 +24,8 @@
                 <th>Status</th>
                 <th>Notes</th>
                 <th class="admin-column">Created Date</th>
-                <th class="admin-column">Updated Date</th>
                 <th class="admin-column">Created By</th>
+                <th class="admin-column">Updated Date</th>               
                 <th class="admin-column">Updated By</th>
                 <th>Actions</th>
             </tr>
@@ -34,7 +34,7 @@
             @foreach (var contact in Model.ContactModel.Contacts)
             {
                 <tr id="contactRow-@contact.ContactID">
-                    <td>@contact.ContactID</td>
+                    <td></td>
                     <td>@contact.Name</td>
                     <td>@contact.Email</td>
                     <td>@contact.Phone</td>
@@ -42,8 +42,8 @@
                     <td>@contact.Status</td>
                     <td>@contact.Notes</td>
                     <td class="admin-column">@contact.CreatedDate?.ToString("g")</td>
-                    <td class="admin-column">@contact.UpdatedDate?.ToString("g")</td>
                     <td class="admin-column">@contact.CreatedBy</td>
+                    <td class="admin-column">@contact.UpdatedDate?.ToString("g")</td>            
                     <td class="admin-column">@contact.UpdatedBy</td>
                     <td>
                         <button class="btn btn-sm btn-primary me-1 btn-edit" data-bs-toggle="modal" data-bs-target="#editContactModal" data-contactid="@contact.ContactID">
@@ -158,6 +158,7 @@ else
 
 @section Scripts {
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
 
@@ -194,7 +195,19 @@ else
                 searching: true,
                 lengthChange: true,
                 pageLength: 10,
-                lengthMenu: [5, 10, 25, 50, 100]
+                lengthMenu: [5, 10, 25, 50, 100],
+                columnDefs: [{
+                    targets: 0, // First column (index 0)
+                    searchable: false,
+                    orderable: false
+                }],
+                order: [[1, 'asc']], // Order by Name column instead of index
+                drawCallback: function (settings) {
+                    let api = this.api();
+                    api.column(0, { page: 'current' }).nodes().each(function (cell, i) {
+                        cell.innerHTML = i + 1;
+                    });
+                }
             });
 
             // Create Contact
