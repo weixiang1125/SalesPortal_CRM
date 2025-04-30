@@ -2,6 +2,12 @@
     Layout = null;
 }
 
+@{
+    var username = Context.Session.GetString("Username");
+    var role = Context.Session.GetString("Role");
+}
+
+
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
@@ -132,8 +138,9 @@
     </div>
 
 
+      <script src="~/js/jwt-decode.js"></script>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
 
     <script>
            // Toggle Sidebar
@@ -153,6 +160,14 @@
                 });
             }
 
+             var currentUser = {
+                username: sessionStorage.getItem("username") || '',
+                role: sessionStorage.getItem("role") || ''
+            };
+
+
+
+            console.log("Logged in as:", currentUser.username, "Role:", currentUser.role);
 
     </script>
 

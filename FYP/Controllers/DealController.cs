@@ -12,7 +12,8 @@ public class DealController : BaseController
     private readonly IDealService _dealService;
     private readonly IUsersService _usersService;
 
-    public DealController(IDealService dealService, IUsersService usersService)
+    public DealController(IDealService dealService, IUsersService usersService, ILogger<BaseController> logger)
+        : base(logger)  // Pass the logger to the BaseController constructor
     {
         _dealService = dealService;
         _usersService = usersService;

@@ -22,6 +22,7 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+app.UseSession(); // add this after app.UseRouting();
 
 app.Use(async (context, next) =>
 {
@@ -34,7 +35,7 @@ app.Use(async (context, next) =>
     await next();
 });
 
-app.UseSession(); // add this after app.UseRouting();
+
 
 app.UseAuthorization();
 

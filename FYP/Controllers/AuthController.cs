@@ -15,7 +15,6 @@ namespace CRM_API.Controllers
         private readonly IAuthService _authService;
         private readonly IUsersService _usersService;
         private readonly IConfiguration _configuration;
-        private readonly string _secretKey = "NLGYHV3ja6UCoPOJBq-2ZcStWwQyMhocH_WRxeoKP5w"; // Secret key for signing JWT
         private readonly int _expirationMinutes = 30; // JWT token expiration time
 
         public AuthController(IAuthService authService, IUsersService usersService, IConfiguration configuration)
@@ -48,6 +47,8 @@ namespace CRM_API.Controllers
             var token = await _authService.LoginAsync(request.Username, request.Password);
             if (token == null) return Unauthorized();
 
+            var user = await _usersService.GetUserByUsernameAsync(request.Username);
+
             Response.Cookies.Append(
                 _configuration["Jwt:CookieName"] ?? "authToken",
                 token,
@@ -57,12 +58,11 @@ namespace CRM_API.Controllers
                     Secure = true,
                     SameSite = SameSiteMode.None,
                     Expires = DateTime.UtcNow.AddMinutes(_expirationMinutes),
-                    Path = "/", // fine
+                    Path = "/",
                     IsEssential = true
-                    // REMOVE Domain = "localhost"
                 });
 
-            return Ok(new { Message = "Login successful" });
+            return Ok(new { Message = "Login successful", Token = token }); // Include token in the response
         }
 
 
@@ -86,7 +86,8 @@ namespace CRM_API.Controllers
             }
 
             // Generate a new token based on the claims of the expired token
-            var newToken = GenerateJwtToken(principal.Identity as ClaimsIdentity);
+            var newToken = _authService.GenerateJwtTokenFromClaimsPrincipal(principal);
+
 
             return Ok(new { Token = newToken });
         }
@@ -97,7 +98,8 @@ namespace CRM_API.Controllers
             try
             {
                 var tokenHandler = new JwtSecurityTokenHandler();
-                var key = Encoding.UTF8.GetBytes(_secretKey);
+                var key = Encoding.UTF8.GetBytes(_configuration["Jwt:Secret"]);
+
 
                 var principal = tokenHandler.ValidateToken(token, new TokenValidationParameters
                 {
@@ -115,22 +117,7 @@ namespace CRM_API.Controllers
             }
         }
 
-        // Helper method to generate a new JWT token
-        private string GenerateJwtToken(ClaimsIdentity identity)
-        {
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secretKey));
-            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            var token = new JwtSecurityToken(
-                issuer: "SalesPortal",
-                audience: "SalesPortal",
-                claims: identity.Claims,
-                expires: DateTime.Now.AddMinutes(_expirationMinutes),
-                signingCredentials: credentials
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
 
     }
 }

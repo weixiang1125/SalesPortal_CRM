@@ -9,16 +9,20 @@ using SharedLibrary.Models;
 public class ContactController : BaseController
 {
     private readonly IContactService _contactService;
+    private readonly ILogger<ContactController> _logger;
 
-    public ContactController(IContactService contactService)
+    public ContactController(IContactService contactService, ILogger<ContactController> logger)
+        : base(logger)  // Pass the logger to the BaseController constructor
     {
         _contactService = contactService;
+        _logger = logger;
     }
 
     [Authorize]
     [HttpGet("GetContactsByUserId")]
     public async Task<ActionResult<IEnumerable<Contact>>> GetContactsByUserId()
     {
+        _logger.LogInformation($"CurrentUserId: {CurrentUserId}, IsAdmin: {IsAdmin}");
         if (IsAdmin)
         {
             var allContacts = await _contactService.GetAllContactsAsync();

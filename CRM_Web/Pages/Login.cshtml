@@ -118,16 +118,18 @@
 
     <div id="loginError" class="text-danger mt-3 text-center" style="display: none;"></div>
 
+    <script src="~/js/jwt-decode.js"></script>
+
 </body>
 </html>
 
 <script>
-       document.getElementById('loginForm').addEventListener('submit', function(event) {
+           document.getElementById('loginForm').addEventListener('submit', function(event) {
         event.preventDefault();
 
         fetch('https://localhost:44309/api/Auth/login', {
             method: 'POST',
-            credentials: 'include', // THIS IS CRUCIAL
+            credentials: 'include', // Include cookies in the request
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 username: document.getElementById('username').value.trim(),
@@ -135,25 +137,53 @@
             })
         })
         .then(async response => {
+            console.log("Response status:", response.status);
+            const responseText = await response.text(); // Get raw response text
+            console.log("Raw response:", responseText);
+
             if (response.ok) {
-                window.location.href = 'https://localhost:44373/Dashboard';
+                const data = JSON.parse(responseText);  // Safely parse the response
+                const token = data.token;
+
+                if (!token) {
+                    showError("Invalid login response");
+                    return;
+                }
+
+                // Decode the JWT token
+                const decodedToken = jwtDecode(token);
+                console.log(decodedToken);
+
+                const username = decodedToken["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"];
+                const role = decodedToken["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+
+                console.log("Logged in as:", username, "Role:", role);
+
+                // Store decoded user data in sessionStorage or localStorage
+                 sessionStorage.setItem('username', username);
+                sessionStorage.setItem('role', role);
+
+                window.location.href = 'https://localhost:44373/Dashboard'; // Redirect to dashboard
             } else {
-                const error = await response.json().catch(() => ({}));
-                showError(error.message || "Login failed");
+                const error = responseText ? JSON.parse(responseText) : { message: "Login failed" };
+                showError(error.message);
             }
         })
-        .catch(() => showError("Network error"));
+        .catch(error => {
+            console.error("Error during fetch:", error);
+            showError("Network error");
+        });
+
+        // Helper function to show error message
+        function showError(message) {
+            const el = document.getElementById('loginError');
+            el.style.display = 'block';
+            el.textContent = message;
+        }
+
+        // Logout reason handling (unchanged)
+        const reason = sessionStorage.getItem("logoutReason");
+        if (reason) showError(reason);
+        sessionStorage.removeItem("logoutReason");
     });
-
-    // Helper function
-    function showError(message) {
-        const el = document.getElementById('loginError');
-        el.style.display = 'block';
-        el.textContent = message;
-    }
-
-    // Logout reason handling (unchanged)
-    const reason = sessionStorage.getItem("logoutReason");
-    if (reason) showError(reason);
-    sessionStorage.removeItem("logoutReason");
 </script>

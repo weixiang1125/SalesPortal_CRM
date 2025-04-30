@@ -6,6 +6,14 @@ namespace CRM_API.Controllers
     [ApiController]
     public abstract class BaseController : ControllerBase
     {
+        private readonly ILogger<BaseController> _logger;
+
+        // Inject logger
+        public BaseController(ILogger<BaseController> logger)
+        {
+            _logger = logger;
+        }
+
         // Property to get Current UserId from the JWT token
         protected int CurrentUserId
         {
@@ -30,8 +38,13 @@ namespace CRM_API.Controllers
         {
             get
             {
+                _logger.LogInformation("User roles: {Roles}", string.Join(",", User.Claims
+                    .Where(c => c.Type == ClaimTypes.Role || c.Type.Contains("role"))
+                    .Select(c => $"{c.Type}:{c.Value}")));
+
                 return User.IsInRole("Admin");
             }
         }
+
     }
 }

@@ -12,12 +12,14 @@ namespace CRM_API.Services
         private readonly IUsersService _usersService;
         private readonly ApplicationDbContext _dbContext;
         private readonly IConfiguration _configuration;
+        private readonly ILogger<ContactController> _logger;
 
-        public AuthService(IUsersService usersService, ApplicationDbContext dbContext, IConfiguration configuration)
+        public AuthService(IUsersService usersService, ApplicationDbContext dbContext, IConfiguration configuration, ILogger<ContactController> logger)
         {
             _usersService = usersService;
             _dbContext = dbContext;
             _configuration = configuration;
+            _logger = logger;
         }
 
         public async Task<string?> LoginAsync(string username, string password)
@@ -89,8 +91,31 @@ namespace CRM_API.Services
                 expires: customExpiry ?? DateTime.Now.AddMinutes(30), // Flexible expiry
                 signingCredentials: creds
             );
+            _logger.LogInformation("Generated JWT token with claims: {Claims}", string.Join(", ", claims.Select(c => $"{c.Type}: {c.Value}")));
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
+        public string GenerateJwtTokenFromClaimsPrincipal(ClaimsPrincipal principal)
+        {
+            var username = principal.Identity?.Name;
+            var userId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var role = principal.FindFirst(ClaimTypes.Role)?.Value;
+
+            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(role))
+            {
+                throw new SecurityTokenException("Invalid claims");
+            }
+
+            var user = new Users
+            {
+                Username = username,
+                UserID = int.Parse(userId),
+                Role = role
+            };
+
+            return GenerateJwtToken(user); // Existing method
+        }
+
     }
 }

@@ -16,17 +16,17 @@
     <table id="contactsTable" class="table table-bordered table-striped">
         <thead class="table-dark">
             <tr>
-                <th>Contact ID</th>
+                <th>#</th>
                 <th>Name</th>
                 <th>Email</th>
                 <th>Phone</th>
                 <th>Company</th>
                 <th>Status</th>
                 <th>Notes</th>
-                <th>Created Date</th>
-                <th>Updated Date</th>
-                <th>Created By</th>
-                <th>Updated By</th>
+                <th class="admin-column">Created Date</th>
+                <th class="admin-column">Updated Date</th>
+                <th class="admin-column">Created By</th>
+                <th class="admin-column">Updated By</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -41,10 +41,10 @@
                     <td>@contact.Company</td>
                     <td>@contact.Status</td>
                     <td>@contact.Notes</td>
-                    <td>@contact.CreatedDate?.ToString("g")</td>
-                    <td> @contact.UpdatedDate?.ToString("g") </td>
-                    <td>@contact.CreatedBy</td>
-                    <td>@contact.UpdatedBy</td>
+                    <td class="admin-column">@contact.CreatedDate?.ToString("g")</td>
+                    <td class="admin-column">@contact.UpdatedDate?.ToString("g")</td>
+                    <td class="admin-column">@contact.CreatedBy</td>
+                    <td class="admin-column">@contact.UpdatedBy</td>
                     <td>
                         <button class="btn btn-sm btn-primary me-1 btn-edit" data-bs-toggle="modal" data-bs-target="#editContactModal" data-contactid="@contact.ContactID">
                             <i class="fas fa-edit"></i>
@@ -162,8 +162,33 @@ else
     <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
 
     <script>
+        function confirmDelete(contactId) {
+            if (confirm("Are you sure you want to delete this contact?")) {
+                $.ajax({
+                    url: `https://localhost:44309/api/Contact/DeleteContactById/${contactId}`,
+                    type: 'DELETE',
+                    xhrFields: { withCredentials: true },
+                    success: function () {
+                        location.reload();
+                    },
+                    error: function () {
+                        alert("Error deleting contact.");
+                    }
+                });
+            }
+        }
+
         $(document).ready(function () {
-            // Initialize DataTable for contacts
+            // Choose one method to determine admin status
+            const isAdmin = sessionStorage.getItem('role') === 'Admin';
+
+
+            // Hide admin-only columns BEFORE initializing DataTable
+            if (!isAdmin) {
+                $('.admin-column').hide();
+            }
+
+            // Initialize DataTables
             $('#contactsTable').DataTable({
                 paging: true,
                 searching: true,
@@ -190,11 +215,9 @@ else
                     type: 'POST',
                     contentType: 'application/json',
                     data: JSON.stringify(formData),
-                    xhrFields: {
-                        withCredentials: true  // Ensure cookies are sent
-                    },
-                    success: function (response) {
-                        location.reload(); // Reload page to show the new contact
+                    xhrFields: { withCredentials: true },
+                    success: function () {
+                        location.reload();
                     },
                     error: function () {
                         alert("Error creating contact.");
@@ -222,11 +245,9 @@ else
                     type: 'PUT',
                     contentType: 'application/json',
                     data: JSON.stringify(formData),
-                    xhrFields: {
-                        withCredentials: true  // Ensure cookies are sent
-                    },
+                    xhrFields: { withCredentials: true },
                     success: function () {
-                        location.reload(); // Reload page to show updated contact
+                        location.reload();
                     },
                     error: function () {
                         alert("Error updating contact.");
@@ -241,11 +262,8 @@ else
                 $.ajax({
                     url: `https://localhost:44309/api/Contact/GetContactById/${contactId}`,
                     type: 'GET',
-                    xhrFields: {
-                        withCredentials: true  // Ensure cookies are sent
-                    },
+                    xhrFields: { withCredentials: true },
                     success: function (contact) {
-                        // Populate the edit form with contact details
                         $("#EditContactID").val(contact.contactID);
                         $("#EditName").val(contact.name);
                         $("#EditEmail").val(contact.email);
@@ -260,24 +278,5 @@ else
                 });
             });
         });
-
-        // Confirm delete
-        function confirmDelete(contactId) {
-            if (confirm("Are you sure you want to delete this contact?")) {
-                $.ajax({
-                    url: `https://localhost:44309/api/Contact/DeleteContactById/${contactId}`,
-                    type: 'DELETE',
-                    xhrFields: {
-                        withCredentials: true  // Ensure cookies are sent
-                    },
-                    success: function () {
-                        location.reload(); // Reload page to reflect changes
-                    },
-                    error: function () {
-                        alert("Error deleting contact.");
-                    }
-                });
-            }
-        }
     </script>
 }
