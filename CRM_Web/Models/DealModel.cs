@@ -1,11 +1,11 @@
-﻿using SharedLibrary.Models;
+﻿using SharedLibrary.DTOs;
 
-namespace CRM_Web.Pages.Deals
+namespace CRM_Web.Models
 {
     public class DealModel
     {
-        public List<Deal> Deals { get; set; } = new();
-        public Deal NewDeal { get; set; } = new(); // Add this if it's not there
-        public Deal DealToEdit { get; set; } = new();
+        public List<DealDto> Deals { get; set; } = new();
+        public DealDto NewDeal { get; set; } = new();
+        public DealDto DealToEdit { get; set; } = new();
     }
 }

@@ -62,6 +62,62 @@ namespace SharedLibrary
                 .HasOne(cm => cm.Channel)
                 .WithMany(c => c.ChatMessages)
                 .HasForeignKey(cm => cm.ChannelID);
+
+            // Foreign key mappings
+            modelBuilder.Entity<Contact>()
+                .HasOne(c => c.CreatedByUser)
+                .WithMany()
+                .HasForeignKey(c => c.CreatedBy)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Contact>()
+                .HasOne(c => c.UpdatedByUser)
+                .WithMany()
+                .HasForeignKey(c => c.UpdatedBy)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Deal>()
+                .HasOne(d => d.CreatedByUser)
+                .WithMany()
+                .HasForeignKey(d => d.CreatedBy)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Deal>()
+                .HasOne(d => d.UpdatedByUser)
+                .WithMany()
+                .HasForeignKey(d => d.UpdatedBy)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Task>()
+                .HasOne(t => t.CreatedByUser)
+                .WithMany()
+                .HasForeignKey(t => t.CreatedBy)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Task>()
+                .HasOne(t => t.UpdatedByUser)
+                .WithMany()
+                .HasForeignKey(t => t.UpdatedBy)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ChatMessage>()
+                .HasOne(m => m.CreatedByUser)
+                .WithMany()
+                .HasForeignKey(m => m.CreatedBy)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // 🔁 AutoInclude navigation properties (EF Core 5+)
+            modelBuilder.Entity<Contact>().Navigation(c => c.CreatedByUser).AutoInclude();
+            modelBuilder.Entity<Contact>().Navigation(c => c.UpdatedByUser).AutoInclude();
+
+            modelBuilder.Entity<Deal>().Navigation(d => d.CreatedByUser).AutoInclude();
+            modelBuilder.Entity<Deal>().Navigation(d => d.UpdatedByUser).AutoInclude();
+
+            modelBuilder.Entity<Task>().Navigation(t => t.CreatedByUser).AutoInclude();
+            modelBuilder.Entity<Task>().Navigation(t => t.UpdatedByUser).AutoInclude();
+
+            modelBuilder.Entity<ChatMessage>().Navigation(m => m.CreatedByUser).AutoInclude();
+
         }
     }
 }

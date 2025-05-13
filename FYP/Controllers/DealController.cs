@@ -1,7 +1,9 @@
-﻿using CRM_API.Controllers;
+﻿using AutoMapper;
+using CRM_API.Controllers;
 using CRM_API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SharedLibrary.DTOs;
 using SharedLibrary.Models;
 using System.Security.Claims;
 
@@ -11,28 +13,26 @@ public class DealController : BaseController
 {
     private readonly IDealService _dealService;
     private readonly IUsersService _usersService;
+    private readonly IMapper _mapper;
 
-    public DealController(IDealService dealService, IUsersService usersService, ILogger<BaseController> logger)
+    public DealController(IDealService dealService, IUsersService usersService, ILogger<BaseController> logger, IMapper mapper)
         : base(logger)  // Pass the logger to the BaseController constructor
     {
         _dealService = dealService;
         _usersService = usersService;
+        _mapper = mapper;
     }
 
     [Authorize]
     [HttpGet("GetDealByUserId")]
-    public async Task<ActionResult<IEnumerable<Deal>>> GetDealByUserId()
+    public async Task<ActionResult<IEnumerable<DealDto>>> GetDealByUserId()
     {
-        if (IsAdmin)
-        {
-            var allDeals = await _dealService.GetAllDealAsync();
-            return Ok(allDeals);
-        }
-        else
-        {
-            var userDeals = await _dealService.GetDealsByUserIdAsync(CurrentUserId);
-            return Ok(userDeals);
-        }
+        var deals = IsAdmin
+            ? await _dealService.GetAllDealAsync()
+            : await _dealService.GetDealsByUserIdAsync(CurrentUserId);
+
+        var result = _mapper.Map<IEnumerable<DealDto>>(deals);
+        return Ok(result);
     }
 
 
@@ -46,11 +46,13 @@ public class DealController : BaseController
 
     [Authorize]
     [HttpGet("GetDealById/{id}")]
-    public async Task<IActionResult> GetById(int id)
+    public async Task<ActionResult<DealDto>> GetDealById(int id)
     {
         var deal = await _dealService.GetDealByIdAsync(id);
         if (deal == null) return NotFound();
-        return Ok(deal);
+
+        var dto = _mapper.Map<DealDto>(deal);
+        return Ok(dto);
     }
 
     [Authorize]
@@ -63,7 +65,7 @@ public class DealController : BaseController
         deal.CreatedBy = userId;
 
         var created = await _dealService.CreateDealAsync(deal, userId);
-        return CreatedAtAction(nameof(GetById), new { id = created.DealID }, created);
+        return CreatedAtAction(nameof(GetDealById), new { id = created.DealID }, created);
     }
 
     [Authorize]

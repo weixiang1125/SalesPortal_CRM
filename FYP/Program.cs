@@ -1,3 +1,4 @@
+using CRM_API.Mappings;
 using CRM_API.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.CookiePolicy;
@@ -76,7 +77,7 @@ builder.Services.AddCors(options =>
     });
 });
 
-
+builder.Services.AddAutoMapper(typeof(AutoMapperProfile));
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 

@@ -19,5 +19,8 @@ namespace SharedLibrary.Models
 
         public Contact? Contact { get; set; }
         public Deal? Deal { get; set; }
+
+        public Users? CreatedByUser { get; set; }
+        public Users? UpdatedByUser { get; set; }
     }
 }

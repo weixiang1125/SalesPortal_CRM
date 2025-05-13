@@ -20,5 +20,9 @@ namespace SharedLibrary.Models
         public ICollection<Deal>? Deals { get; set; }
         public ICollection<Task>? Tasks { get; set; }
         public ICollection<ChatChannel>? ChatChannels { get; set; }
+
+        public Users? CreatedByUser { get; set; }
+        public Users? UpdatedByUser { get; set; }
+
     }
 }

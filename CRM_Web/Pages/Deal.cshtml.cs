@@ -1,9 +1,11 @@
+using CRM_Web.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Newtonsoft.Json;
-using SharedLibrary.Models;
+using SharedLibrary.DTOs;
 using System.Net;
 using System.Net.Http.Headers;
+
 
 namespace CRM_Web.Pages.Deals
 {
@@ -14,6 +16,7 @@ namespace CRM_Web.Pages.Deals
 
         [BindProperty]
         public DealModel DealModel { get; set; } = new();
+
 
         public DealModelPage(IHttpClientFactory httpClientFactory, IConfiguration configuration)
         {
@@ -47,7 +50,9 @@ namespace CRM_Web.Pages.Deals
                 if (response.IsSuccessStatusCode)
                 {
                     var jsonString = await response.Content.ReadAsStringAsync();
-                    DealModel.Deals = JsonConvert.DeserializeObject<List<Deal>>(jsonString) ?? new List<Deal>();
+                    DealModel.Deals = JsonConvert.DeserializeObject<List<DealDto>>(jsonString) ?? new();
+
+
                 }
                 else if (response.StatusCode == HttpStatusCode.Unauthorized)
                 {
@@ -57,7 +62,8 @@ namespace CRM_Web.Pages.Deals
                 else
                 {
                     // Handle other errors
-                    DealModel.Deals = new List<Deal>();
+                    DealModel.Deals = new List<DealDto>();
+
                     // Consider logging the error
 
                 }
@@ -65,7 +71,8 @@ namespace CRM_Web.Pages.Deals
             catch (Exception ex)
             {
                 // Handle network errors
-                DealModel.Deals = new List<Deal>();
+                DealModel.Deals = new List<DealDto>();
+
 
             }
 
@@ -73,7 +80,10 @@ namespace CRM_Web.Pages.Deals
         }
 
 
-
+        public class DealDtoModel
+        {
+            public List<DealDto> Deals { get; set; } = new();
+        }
 
 
     }

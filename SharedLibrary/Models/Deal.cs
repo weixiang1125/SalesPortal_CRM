@@ -20,5 +20,8 @@ namespace SharedLibrary.Models
 
         public Contact? Contact { get; set; }
         public ICollection<Task>? Tasks { get; set; }
+
+        public Users? CreatedByUser { get; set; }
+        public Users? UpdatedByUser { get; set; }
     }
 }

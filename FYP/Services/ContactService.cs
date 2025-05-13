@@ -18,6 +18,14 @@ namespace CRM_API.Services
             return await _dbContext.DBContacts.ToListAsync();
         }
 
+        public async Task<IEnumerable<Contact>> GetAllContactsWithUsersAsync()
+        {
+            return await _dbContext.DBContacts
+                .Include(c => c.CreatedByUser)
+                .Include(c => c.UpdatedByUser)
+                .ToListAsync();
+        }
+
         public async Task<Contact?> GetContactByIdAsync(int id)
         {
             return await _dbContext.DBContacts.FindAsync(id);

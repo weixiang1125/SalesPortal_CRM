@@ -1,9 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Newtonsoft.Json;
-using SharedLibrary.Models;
+using SharedLibrary.DTOs;
 using System.Net;
 using System.Net.Http.Headers;
+
 
 namespace CRM_Web.Pages.Contacts
 {
@@ -13,7 +14,8 @@ namespace CRM_Web.Pages.Contacts
         private readonly IConfiguration _configuration;
 
         [BindProperty]
-        public ContactModel ContactModel { get; set; } = new();
+        public ContactDtoModel ContactModel { get; set; } = new();
+
 
         public ContactModelPage(IHttpClientFactory httpClientFactory, IConfiguration configuration)
         {
@@ -47,7 +49,7 @@ namespace CRM_Web.Pages.Contacts
                 if (response.IsSuccessStatusCode)
                 {
                     var jsonString = await response.Content.ReadAsStringAsync();
-                    ContactModel.Contacts = JsonConvert.DeserializeObject<List<Contact>>(jsonString) ?? new List<Contact>();
+                    ContactModel.Contacts = JsonConvert.DeserializeObject<List<ContactDto>>(jsonString) ?? new List<ContactDto>();
                 }
                 else if (response.StatusCode == HttpStatusCode.Unauthorized)
                 {
@@ -57,18 +59,23 @@ namespace CRM_Web.Pages.Contacts
                 else
                 {
                     // Handle other errors
-                    ContactModel.Contacts = new List<Contact>();
+                    ContactModel.Contacts = new List<ContactDto>();
                     // Consider logging the error or showing a user-friendly message
                 }
             }
             catch (Exception ex)
             {
                 // Handle network errors
-                ContactModel.Contacts = new List<Contact>();
+                ContactModel.Contacts = new List<ContactDto>();
                 // Consider logging the exception for debugging purposes
             }
 
             return Page();
+        }
+
+        public class ContactDtoModel
+        {
+            public List<ContactDto> Contacts { get; set; } = new();
         }
     }
 }

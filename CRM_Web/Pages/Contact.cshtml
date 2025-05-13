@@ -42,9 +42,9 @@
                     <td>@contact.Status</td>
                     <td>@contact.Notes</td>
                     <td class="admin-column">@contact.CreatedDate?.ToString("g")</td>
-                    <td class="admin-column">@contact.CreatedBy</td>
-                    <td class="admin-column">@contact.UpdatedDate?.ToString("g")</td>            
-                    <td class="admin-column">@contact.UpdatedBy</td>
+                    <td class="admin-column">@contact.CreatedByUsername</td>
+                    <td class="admin-column">@contact.UpdatedDate?.ToString("g")</td>
+                    <td class="admin-column">@contact.UpdatedByUsername</td>
                     <td>
                         <button class="btn btn-sm btn-primary me-1 btn-edit" data-bs-toggle="modal" data-bs-target="#editContactModal" data-contactid="@contact.ContactID">
                             <i class="fas fa-edit"></i>

@@ -49,10 +49,10 @@
                         <td class="dealStatus">@deal.Status</td>
                         <td class="dealCloseDate">@(deal.ExpectedCloseDate?.ToShortDateString() ?? "-")</td>
                         <td>@deal.CreatedDate?.ToString("g")</td>
-                        <td>@deal.CreatedBy</td>
-                        <td>@deal.UpdatedDate?.ToString("g")</td>                        
-                        <td>@deal.UpdatedBy</td>
-                        <td>@deal.Contact?.Name</td>
+                        <td>@deal.CreatedByUsername</td>
+                        <td>@deal.UpdatedDate?.ToString("g")</td>
+                        <td>@deal.UpdatedByUsername</td>
+                        <td>@deal.ContactName</td>
                         <td>
                             <button class="btn btn-sm btn-primary me-1 btn-edit" data-bs-toggle="modal" data-bs-target="#editDealModal" data-dealid="@deal.DealID">
                                 <i class="fas fa-edit"></i>
@@ -96,7 +96,8 @@
                                         <h6 class="card-title mb-1">@deal.DealName</h6>
                                         <p class="mb-1"><strong>Value:</strong> @(deal.Value?.ToString("C") ?? "-")</p>
                                         <p class="mb-1"><strong>Status:</strong> @deal.Status</p>
-                                        <p class="mb-1"><strong>Contact:</strong> @deal.Contact?.Name</p>
+                                        <p class="mb-1"><strong>Contact:</strong> @deal.ContactName</p>
+
                                         <div class="d-flex justify-content-end">
                                             <button class="btn btn-sm btn-primary me-1 btn-edit" data-bs-toggle="modal" data-bs-target="#editDealModal" data-dealid="@deal.DealID">
                                                 <i class="fas fa-edit"></i>

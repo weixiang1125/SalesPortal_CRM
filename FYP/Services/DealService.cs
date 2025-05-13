@@ -15,19 +15,28 @@ namespace CRM_API.Services
 
         public async Task<IEnumerable<Deal>> GetAllDealAsync()
         {
-            return await _dbContext.DBDeal.Include(d => d.Contact).ToListAsync();
+            return await _dbContext.DBDeal
+                .Include(d => d.Contact)
+                .Include(d => d.CreatedByUser)
+                .Include(d => d.UpdatedByUser)
+                .ToListAsync();
         }
 
         public async Task<Deal?> GetDealByIdAsync(int id)
         {
-            return await _dbContext.DBDeal.Include(d => d.Contact)
-                                           .FirstOrDefaultAsync(d => d.DealID == id);
+            return await _dbContext.DBDeal
+                .Include(d => d.Contact)
+                .Include(d => d.CreatedByUser)
+                .Include(d => d.UpdatedByUser)
+                .FirstOrDefaultAsync(d => d.DealID == id);
         }
 
         public async Task<IEnumerable<Deal>> GetDealsByUserIdAsync(int userId)
         {
             return await _dbContext.DBDeal
                 .Include(d => d.Contact)
+                .Include(d => d.CreatedByUser)
+                .Include(d => d.UpdatedByUser)
                 .Where(d => d.CreatedBy == userId)
                 .ToListAsync();
         }

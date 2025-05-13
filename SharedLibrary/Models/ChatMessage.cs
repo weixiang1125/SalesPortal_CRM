@@ -21,5 +21,8 @@ namespace SharedLibrary.Models
         public string? Remarks { get; set; }
 
         public ChatChannel? Channel { get; set; }
+
+        public Users? CreatedByUser { get; set; }
+        public Users? UpdatedByUser { get; set; }
     }
 }
