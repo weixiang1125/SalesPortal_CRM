@@ -152,8 +152,10 @@
                         <input asp-for="DealModel.NewDeal.ExpectedCloseDate" class="form-control" id="ExpectedCloseDate" type="date" />
                     </div>
                     <div class="col-md-6">
-                        <label asp-for="DealModel.NewDeal.ContactID" class="form-label">Contact ID</label>
-                        <input asp-for="DealModel.NewDeal.ContactID" class="form-control" id="ContactID" />
+                        <label asp-for="DealModel.NewDeal.ContactID" class="form-label">Contact Name</label>
+                        <select class="form-select" id="ContactID" name="ContactID">
+                            <option value="">-- Select Contact --</option>
+                        </select>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -197,8 +199,10 @@
                         <input asp-for="DealModel.DealToEdit.ExpectedCloseDate" class="form-control" id="EditExpectedCloseDate" type="date" />
                     </div>
                     <div class="col-md-6">
-                        <label asp-for="DealModel.DealToEdit.ContactID" class="form-label">Contact ID</label>
-                        <input asp-for="DealModel.DealToEdit.ContactID" class="form-control" id="EditContactID" />
+                        <label asp-for="DealModel.DealToEdit.ContactID" class="form-label">Contact Name</label>
+                        <select class="form-select" id="EditContactID" name="ContactID">
+                            <option value="">-- Select Contact --</option>
+                        </select>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -230,7 +234,46 @@
 
 
     <script>
+        let cachedContacts = [];
+
+        async function loadContacts() {
+            console.log("🟡 Calling loadContacts()");
+            try {
+                const response = await fetch("https://localhost:44309/api/Contact/GetContactsByUserId", {
+                    credentials: "include"
+                });
+
+                const result = await response.json();
+                console.log("✅ Contacts loaded:", result);
+
+                const contacts = result.$values ?? result;
+                cachedContacts = contacts;
+
+                const createSelect = document.getElementById("ContactID");
+                const editSelect = document.getElementById("EditContactID");
+
+                createSelect.innerHTML = '<option value="">-- Select Contact --</option>';
+                editSelect.innerHTML = '<option value="">-- Select Contact --</option>';
+
+                contacts.forEach(c => {
+                    const option1 = new Option(`${c.name}`, c.contactID);
+                    const option2 = new Option(`${c.name}`, c.contactID);
+                    createSelect.add(option1);
+                    editSelect.add(option2);
+                });
+
+                console.log("✅ Contact dropdowns populated");
+                return true;
+            } catch (err) {
+                console.error("❌ Failed to load contacts:", err);
+                return false;
+            }
+        }
+
+
         $(document).ready(function () {
+            console.log("🟢 Document ready");
+            loadContacts(); // ← Make sure this runs immediately
             const userRole = sessionStorage.getItem("role");
             console.log(userRole);
             // Hide admin-only columns if the user is not an Admin
@@ -339,31 +382,42 @@
                 });
             });
 
-            // Populate Edit Modal
-            $(document).on("click", ".btn-edit", function () {
-                const dealId = $(this).data("dealid");
+        // Populate Edit Modal
+        $(document).on("click", ".btn-edit", async function () {
+            const dealId = $(this).data("dealid");
 
-                $.ajax({
-                    url: `https://localhost:44309/api/Deal/GetDealById/${dealId}`,
-                    type: "GET",
-                    xhrFields: {
-                        withCredentials: true  // Ensures cookies are sent
-                    },
-                    success: function (deal) {
-                        $("#DealID").val(deal.dealID);
-                        $("#EditDealName").val(deal.dealName);
-                        $("#EditValue").val(deal.value);
-                        $("#EditStage").val(deal.stage);
-                        $("#EditStatus").val(deal.status);
-                        $("#EditExpectedCloseDate").val(deal.expectedCloseDate?.split("T")[0]);
-                        $("#EditContactID").val(deal.contactID);
-                    },
-                    error: function () {
-                        alert("Error fetching deal details.");
-                    }
+            try {
+                console.log("🟢 Edit clicked: dealId =", dealId);
+
+                const dealResponse = await fetch(`https://localhost:44309/api/Deal/GetDealById/${dealId}`, {
+                    credentials: "include"
                 });
-            });
+                const deal = await dealResponse.json();
+                console.log("✅ Deal loaded:", deal);
+
+                if (cachedContacts.length === 0) {
+                    const loaded = await loadContacts();
+                    if (!loaded) {
+                        alert("Could not load contacts.");
+                        return;
+                    }
+                }
+
+                $("#DealID").val(deal.dealID);
+                $("#EditDealName").val(deal.dealName);
+                $("#EditValue").val(deal.value);
+                $("#EditStage").val(deal.stage);
+                $("#EditStatus").val(deal.status);
+                $("#EditExpectedCloseDate").val(deal.expectedCloseDate?.split("T")[0] || "");
+                $("#EditContactID").val(deal.contactID); // ✅ Corrected casing
+                console.log("✅ Setting contactID to:", deal.contactID);
+
+            } catch (err) {
+                console.error("Failed to load deal or contacts:", err);
+                alert("Error loading deal info.");
+            }
         });
+    });
 
         function confirmDelete(dealId) {
             if (confirm("Are you sure you want to delete this deal?")) {
