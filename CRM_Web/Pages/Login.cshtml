@@ -1,5 +1,5 @@
 ﻿@page
-@model LoginRequest
+@model CRM_Web.Pages.LoginModel
 @{
     Layout = null; // optional: no layout for login
 }
@@ -154,14 +154,27 @@
                 const decodedToken = jwtDecode(token);
                 console.log(decodedToken);
 
+                const userId = decodedToken["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
                 const username = decodedToken["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"];
                 const role = decodedToken["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
 
                 console.log("Logged in as:", username, "Role:", role);
 
                 // Store decoded user data in sessionStorage or localStorage
-                 sessionStorage.setItem('username', username);
+                sessionStorage.setItem("userId", userId);
+                sessionStorage.setItem('username', username);
                 sessionStorage.setItem('role', role);
+
+                await fetch("/Login?handler=SetSession", {
+                    method: "POST",
+                    credentials: "include", // ✅ This line is essential
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        userID: parseInt(userId),
+                        username: username,
+                        role: role
+                    })
+                });
 
                 window.location.href = 'https://localhost:44373/Dashboard'; // Redirect to dashboard
             } else {

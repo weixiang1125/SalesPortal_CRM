@@ -6,8 +6,8 @@ namespace SharedLibrary.Models
     {
         [Key]
         public int ChannelID { get; set; }
-        public int UserID { get; set; }
-        public int ContactID { get; set; }
+        public int? UserID { get; set; }
+        public int? ContactID { get; set; }
         public DateTime? CreatedDate { get; set; }
         public DateTime? UpdatedDate { get; set; }
         public int? CreatedBy { get; set; }

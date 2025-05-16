@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SharedLibrary.Models
 {
@@ -6,7 +7,7 @@ namespace SharedLibrary.Models
     {
         [Key]
         public int MessageID { get; set; }
-        public int ChannelID { get; set; }
+        public int? ChannelID { get; set; }
         public string? MessageText { get; set; }
         public string? MessageType { get; set; }
         public string? MediaUrl { get; set; }
@@ -22,7 +23,9 @@ namespace SharedLibrary.Models
 
         public ChatChannel? Channel { get; set; }
 
+        [ForeignKey("CreatedBy")]
         public Users? CreatedByUser { get; set; }
+        [ForeignKey("UpdatedBy")]
         public Users? UpdatedByUser { get; set; }
     }
 }

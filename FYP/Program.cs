@@ -62,6 +62,8 @@ builder.Services.AddScoped<IUsersService, UsersService>();  // Register UserServ
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IContactService, ContactService>();
 builder.Services.AddScoped<IDealService, DealService>();
+builder.Services.AddScoped<IChatService, ChatService>();
+builder.Services.AddSingleton<WhatsAppService>();
 
 builder.Services.AddControllers();
 
