@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using SharedLibrary;
 using SharedLibrary.Models;
+using System.Net;
 
 namespace CRM_Web.Pages.Chat
 {
@@ -42,14 +43,14 @@ namespace CRM_Web.Pages.Chat
             // All contacts for modal
             AllContacts = await _context.DBContacts.OrderBy(c => c.Name).ToListAsync();
 
-            // Determine selected phone
-            SelectedPhone = phone ?? RecentPhones.FirstOrDefault() ?? string.Empty;
-            if (!string.IsNullOrEmpty(SelectedPhone) && !SelectedPhone.StartsWith("+"))
-            {
-                SelectedPhone = "+" + SelectedPhone;
-            }
+            // ?? Clean and normalize the selected phone
+            var raw = WebUtility.HtmlDecode(phone ?? RecentPhones.FirstOrDefault() ?? string.Empty)
+                .Replace(" ", "").Trim();
 
-            // 1. Try to find contact
+            SelectedPhone = raw.TrimStart('+');
+            SelectedPhone = "+" + SelectedPhone;
+
+            // 1. Try to find or create contact
             var contact = await _context.DBContacts.FirstOrDefaultAsync(c => c.Phone == SelectedPhone);
             if (contact == null)
             {
@@ -63,7 +64,7 @@ namespace CRM_Web.Pages.Chat
                 await _context.SaveChangesAsync();
             }
 
-            // 2. Try to find ChatChannel
+            // 2. Try to find or create ChatChannel
             var channel = await _context.DBChatChannel
                 .FirstOrDefaultAsync(c => c.UserID == userId && c.ContactID == contact.ContactID);
 
@@ -96,21 +97,30 @@ namespace CRM_Web.Pages.Chat
                 return new JsonResult(new List<ChatMessage>());
 
             var userId = int.Parse(userIdStr);
-            if (!phone.StartsWith("+")) phone = "+" + phone;
 
+            // Normalize phone again
+            var normalizedPhone = WebUtility.HtmlDecode(phone ?? "").Replace(" ", "").Trim();
+            normalizedPhone = normalizedPhone.TrimStart('+');
+            normalizedPhone = "+" + normalizedPhone;
+
+            // Get correct channel
             var channelId = await _context.DBChatChannel
-                .Where(c => c.UserID == userId && c.Contact.Phone == phone)
+                .Where(c => c.UserID == userId && c.Contact.Phone == normalizedPhone)
                 .Select(c => c.ChannelID)
                 .FirstOrDefaultAsync();
 
+            if (channelId == 0)
+                return new JsonResult(new List<object>());
+
+            // Return JSON with matching property names for JS
             var messages = await _context.DBChatMessage
                 .Where(m => m.ChannelID == channelId)
                 .OrderBy(m => m.CreatedDate)
                 .Select(m => new
                 {
-                    m.MessageText,
-                    m.IsSender,
-                    m.CreatedDate
+                    messageText = m.MessageText,
+                    isSender = m.IsSender,
+                    createdDate = m.CreatedDate
                 })
                 .ToListAsync();
 

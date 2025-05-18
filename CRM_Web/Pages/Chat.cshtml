@@ -1,214 +1,337 @@
-﻿@page
-@model CRM_Web.Pages.Chat.IndexModel
-@{
-    ViewData["Title"] = "Chat";
-}
-
-<style>
-    html, body {
-        height: 100%;
-        overflow: hidden;
+﻿    @page
+    @model CRM_Web.Pages.Chat.IndexModel
+    @{
+        ViewData["Title"] = "Chat";
     }
+
+    <style>
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
 
     #chatMessages {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 0 1rem 1rem 1rem; /* remove the hardcoded bottom padding */
         min-height: 0;
     }
-</style>
 
-<div class="row flex-nowrap" style="height: calc(100vh - 60px); margin: 0;">
-    <!-- Chat List -->
-    <div class="col-3 border-end bg-white p-3 overflow-auto">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="mb-0">Chats</h5>
-            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#newChatModal">
-                + New
-            </button>
-        </div>
 
-        <!-- New Chat Modal -->
-        <div class="modal fade" id="newChatModal" tabindex="-1" aria-labelledby="newChatModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="newChatModalLabel">Start New Chat</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <input type="text" id="contactSearch" class="form-control mb-2" placeholder="Search name or phone..." oninput="filterContacts()" />
 
-                        <div style="max-height: 300px; overflow-y: auto;">
-                            <ul id="contactList" class="list-group mb-2">
-                                @foreach (var contact in Model.AllContacts)
-                                {
-                                    <li class="list-group-item list-group-item-action" onclick="selectContact('@contact.Phone')">
-                                        <strong>@contact.Name</strong><br />
-                                        <small>@contact.Phone</small>
-                                    </li>
-                                }
-                            </ul>
+
+    </style>
+
+    <div class="row flex-nowrap" style="height: calc(100vh - 60px); margin: 0;">
+        <!-- Chat List -->
+        <div class="col-3 border-end bg-white p-3 overflow-auto">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">Chats</h5>
+                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#newChatModal">
+                    + New
+                </button>
+            </div>
+
+            <!-- New Chat Modal -->
+            <div class="modal fade" id="newChatModal" tabindex="-1" aria-labelledby="newChatModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="newChatModalLabel">Start New Chat</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="text" id="contactSearch" class="form-control mb-2" placeholder="Search name or phone..." oninput="filterContacts()" />
+
+                            <div style="max-height: 300px; overflow-y: auto;">
+                                <ul id="contactList" class="list-group mb-2">
+                                    @foreach (var contact in Model.AllContacts)
+                                    {
+                                        <li class="list-group-item list-group-item-action" onclick="selectContact('@contact.Phone')">
+                                            <strong>@contact.Name</strong><br />
+                                            <small>@contact.Phone</small>
+                                        </li>
+                                    }
+                                </ul>
+                            </div>
+
+                            <div id="newContactOption" class="text-muted small d-none">
+                                No match found. <a href="#" onclick="startNewChatFromInput()">Start new chat with this number</a>
+                            </div>
                         </div>
 
-                        <div id="newContactOption" class="text-muted small d-none">
-                            No match found. <a href="#" onclick="startNewChatFromInput()">Start new chat with this number</a>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary" onclick="startNewChatFromInput()">Start</button>
                         </div>
-                    </div>
-
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-primary" onclick="startNewChat()">Start</button>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <ul class="list-group">
-            @foreach (var phone in Model.RecentPhones)
-            {
-                <a href="?phone=@phone" class="list-group-item list-group-item-action @(Model.SelectedPhone == phone ? "active" : "")">
-                    @phone
-                </a>
-            }
-        </ul>
-    </div>
-
-    <!-- Chat Messages -->
-    <div class="col-6 d-flex flex-column bg-light p-0" style="height: calc(100vh - 60px);">
-        <div id="chatMessages" class="flex-grow-1 overflow-auto px-3 py-2" style="min-height: 0;">
-            @foreach (var msg in Model.Messages)
-            {
-                <div class="mb-2 text-@(msg.IsSender.GetValueOrDefault() ? "end" : "start")">
-                    <div class="d-inline-block p-2 rounded @(msg.IsSender.GetValueOrDefault() ? "bg-primary text-white" : "bg-white border")">
-                        @msg.MessageText
-                    </div>
-                    <div class="text-muted small">@msg.CreatedDate?.ToLocalTime().ToString("g")</div>
-                </div>
-            }
-        </div>
-
-        <div class="d-flex border-top px-3 py-2" style="position: sticky; bottom: 0; background-color: #f8f9fa; z-index: 10;">
-            <input id="chatInput" class="form-control me-2" style="height: 38px;" placeholder="Type a message..." />
-            <button id="sendButton" class="btn btn-primary">Send</button>
-        </div>
-    </div>
-
-    <!-- Contact Info -->
-    <div class="col-3 border-start bg-white p-3">
-        <h6>Contact Info</h6>
-        @if (!string.IsNullOrEmpty(Model.SelectedPhone))
-        {
-            <div class="mb-3"><strong>Phone:</strong> <div>@Model.SelectedPhone</div></div>
-            <div class="mb-3"><strong>Name:</strong> <div><!-- Add name if needed --></div></div>
-            <div class="d-grid gap-2">
-                <button class="btn btn-outline-secondary">📝 Add Note</button>
-                <button class="btn btn-outline-success">💼 Create Deal</button>
-            </div>
-        }
-        else
-        {
-            <div class="text-muted">Select a chat to see contact details.</div>
-        }
-    </div>
-</div>
-
-
-@section Scripts {
-    <script>
-        const selectedPhone = "@Model.SelectedPhone";
-        const sendButton = document.getElementById("sendButton");
-        const chatInput = document.getElementById("chatInput");
-        const messageContainer = document.getElementById("chatMessages");
-
-        sendButton.addEventListener("click", async () => {
-            const message = chatInput.value.trim();
-            if (!message) return;
-
-            const dto = {
-                contactPhone: selectedPhone,
-                messageText: message,
-                messageType: "text"
-            };
-
-            try {
-                const res = await fetch("https://localhost:44309/api/chat/send", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json",},
-                    credentials: "include",
-                    body: JSON.stringify(dto)
-                });
-
-                if (res.ok) {
-                    chatInput.value = "";
-                    await loadMessages();
-                } else {
-                    alert("Failed to send message.");
+            <ul class="list-group">
+                @foreach (var phone in Model.RecentPhones)
+                {
+                    <a href="?phone=@phone" class="list-group-item list-group-item-action @(Model.SelectedPhone == phone ? "active" : "")">
+                        @phone
+                    </a>
                 }
-            } catch (err) {
-                console.error("Send error:", err);
+            </ul>
+        </div>
+
+        <!-- Chat Messages -->
+        <div class="col-6 d-flex flex-column bg-light p-0" style="height: calc(100vh - 60px);">
+            <div id="chatMessages">
+                @foreach (var msg in Model.Messages)
+                {
+                    <div class="mb-2 text-@(msg.IsSender.GetValueOrDefault() ? "end" : "start")">
+                        <div class="d-inline-block p-2 rounded @(msg.IsSender.GetValueOrDefault() ? "bg-primary text-white" : "bg-white border")">
+                            @msg.MessageText
+                        </div>
+                        <div class="text-muted small">@msg.CreatedDate?.ToLocalTime().ToString("g")</div>
+                    </div>
+                }
+            </div>
+
+            <div id="chatInputBar" class="d-flex border-top px-3 py-2"
+                 style="position: sticky; bottom: 0; background-color: #f8f9fa; z-index: 10;">
+                <textarea id="chatInput" class="form-control me-2"
+                          rows="1"
+                          placeholder="Type a message..."
+                          style="resize: none; max-height: 150px; overflow-y: auto;"></textarea>
+
+                <button id="sendButton" class="btn btn-primary">Send</button>
+            </div>
+        </div>
+
+        <!-- Contact Info -->
+        <div class="col-3 border-start bg-white p-3">
+            <h6>Contact Info</h6>
+            @if (!string.IsNullOrEmpty(Model.SelectedPhone))
+            {
+                <div class="mb-3"><strong>Phone:</strong> <div>@Model.SelectedPhone</div></div>
+                <div class="mb-3"><strong>Name:</strong> <div><!-- Add name if needed --></div></div>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-secondary">📝 Add Note</button>
+                    <button class="btn btn-outline-success">💼 Create Deal</button>
+                </div>
             }
-        });
-
-        async function loadMessages() {
-            if (!selectedPhone) return;
-            try {
-                const normalizedPhone = selectedPhone.startsWith("+") ? selectedPhone : "+" + selectedPhone;
-                const res = await fetch(`/Chat?handler=Messages&phone=${encodeURIComponent(normalizedPhone)}`);
-                const messages = await res.json();
-
-                messageContainer.innerHTML = "";
-
-                messages.forEach(msg => {
-                    const wrapper = document.createElement("div");
-                    wrapper.className = "mb-2 text-" + (msg.isSender ? "end" : "start");
-
-                    const bubble = document.createElement("div");
-                    bubble.className = "d-inline-block p-2 rounded " +
-                        (msg.isSender ? "bg-primary text-white" : "bg-white border");
-                    bubble.textContent = msg.messageText;
-
-                    const time = document.createElement("div");
-                    time.className = "text-muted small";
-                    time.textContent = new Date(msg.createdDate).toLocaleString();
-
-                    wrapper.appendChild(bubble);
-                    wrapper.appendChild(time);
-                    messageContainer.appendChild(wrapper);
-                });
-
-                messageContainer.scrollTop = messageContainer.scrollHeight;
-            } catch (err) {
-                console.error("Load error:", err);
+            else
+            {
+                <div class="text-muted">Select a chat to see contact details.</div>
             }
-        }
+        </div>
+    </div>
 
-        loadMessages();
-        setInterval(loadMessages, 3000);
 
-        function filterContacts() {
-            const input = document.getElementById("contactSearch").value.trim().toLowerCase();
-            const list = document.getElementById("contactList");
-            const items = list.querySelectorAll("li");
+    @section Scripts {
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
 
-            let matchFound = false;
+        <script>
 
-            items.forEach(item => {
-                const text = item.textContent.toLowerCase();
-                const visible = text.includes(input);
-                item.style.display = visible ? "block" : "none";
-                if (visible) matchFound = true;
+            const selectedPhone = "@Model.SelectedPhone";
+            const chatInput = document.getElementById("chatInput");
+            const sendButton = document.getElementById("sendButton");
+            const messageContainer = document.getElementById("chatMessages");
+
+            function adjustBottomPadding() {
+                const inputBar = document.getElementById("chatInputBar");
+                const chatMessages = document.getElementById("chatMessages");
+
+                if (inputBar && chatMessages) {
+                    const inputHeight = inputBar.offsetHeight;
+                    const safePadding = inputHeight - 8; // remove a little margin to keep it tight, but visible
+                    chatMessages.style.paddingBottom = `${safePadding}px`;
+                }
+            }
+
+
+            function selectContact(phone) {
+                connection.invoke("JoinGroup", phone.startsWith("+") ? phone : "+" + phone);
+                window.location.href = `/Chat?phone=${encodeURIComponent(phone)}`;
+            }
+
+
+            function scrollToBottom() {
+                adjustBottomPadding();
+                setTimeout(() => {
+                    messageContainer.scrollTop = messageContainer.scrollHeight;
+                }, 0); // ensure DOM updates before scroll
+            }
+            window.addEventListener("load", adjustBottomPadding);
+
+            chatInput.addEventListener("keydown", function (event) {
+                if (event.key === "Enter" && !event.shiftKey) {
+                    event.preventDefault(); // Prevent new line
+                    sendButton.click();     // Trigger the send button click
+                }
             });
 
-            document.getElementById("newContactOption").classList.toggle("d-none", matchFound || input === "");
-        }
+            chatInput.addEventListener("input", function () {
+                this.style.height = "auto";
+                this.style.height = this.scrollHeight + "px";
+                adjustBottomPadding();
+            });
 
-        function selectContact(phone) {
-            window.location.href = `/Chat?phone=${encodeURIComponent(phone)}`;
-        }
+            window.addEventListener("resize", adjustBottomPadding);
 
-        function startNewChatFromInput() {
-            const input = document.getElementById("contactSearch").value.trim();
-            if (!input) return;
-            const normalized = input.startsWith("+") ? input : "+" + input;
-            window.location.href = `/Chat?phone=${encodeURIComponent(normalized)}`;
-        }
+            let connection;
 
-    </script>
-}
+                sendButton.addEventListener("click", async () => {
+                    const message = chatInput.value.trim();
+                    if (!message) return;
+
+                    const dto = {
+                        contactPhone: selectedPhone.replace(/&#x2B;|&#43;/g, "+"),
+                        messageText: message,
+                        messageType: "text"
+                    };
+
+                    try {
+                        const res = await fetch("https://localhost:44309/api/chat/send", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            credentials: "include",
+                            body: JSON.stringify(dto)
+                        });
+
+                        if (res.ok) {
+                            chatInput.value = "";
+                            // 👇 Show immediately without waiting for SignalR
+                            appendMessage(dto.messageText, true, new Date().toISOString());
+                            scrollToBottom();
+                        } else {
+                            alert("Failed to send message.");
+                        }
+                    } catch (err) {
+                        console.error("Send error:", err);
+                    }
+                });
+
+
+            async function loadMessages() {
+                try {
+                    const normalizedPhone = selectedPhone.startsWith("+") ? selectedPhone : "+" + selectedPhone;
+                    const res = await fetch(`/Chat?handler=Messages&phone=${encodeURIComponent(normalizedPhone)}`);
+                    const messages = await res.json();
+
+                    messageContainer.innerHTML = "";
+
+                    messages.forEach(msg => {
+                        appendMessage(msg.messageText, msg.isSender, msg.createdDate);
+                    });
+
+                    scrollToBottom();
+
+                } catch (err) {
+                    console.error("Load error:", err);
+                }
+            }
+
+            let lastSender = null;
+
+                function appendMessage(messageText, isSender, createdDate) {
+                    const wrapper = document.createElement("div");
+                    wrapper.className = "mb-2 d-flex";
+                    wrapper.style.justifyContent = isSender ? "flex-end" : "flex-start";
+
+                    const bubbleWrapper = document.createElement("div");
+                    bubbleWrapper.style.maxWidth = "70%";
+                    bubbleWrapper.style.display = "inline-block";
+
+                    const bubble = document.createElement("div");
+                    bubble.className = "p-2 rounded";
+                    bubble.style.backgroundColor = isSender ? "#0d6efd" : "#e9ecef";
+                    bubble.style.color = isSender ? "white" : "black";
+                    bubble.style.borderRadius = "1rem";
+                    bubble.style.wordBreak = "break-word";
+                    bubble.style.whiteSpace = "pre-wrap";
+                    bubble.style.boxShadow = "0 1px 3px rgba(0, 0, 0, 0.1)";
+                    bubble.innerHTML = messageText.replace(/\n/g, "<br>");
+
+                    const time = document.createElement("div");
+                    time.className = "text-muted small text-end mt-1";
+                    time.style.fontSize = "0.75rem";
+                    time.textContent = new Date(createdDate).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                    });
+
+                    bubbleWrapper.appendChild(bubble);
+                    bubbleWrapper.appendChild(time);
+                    wrapper.appendChild(bubbleWrapper);
+                    messageContainer.appendChild(wrapper);
+                }
+
+
+
+                async function startSignalR() {
+                    connection = new signalR.HubConnectionBuilder()
+                        .withUrl("/chathub")
+                        .build();
+
+                    // Setup handler BEFORE starting the connection
+                    connection.on("ReceiveMessage", (msg) => {
+                        console.log("📥 Real-time message received:", msg);
+                        alert("📥 Real-time message received:\n" + msg.messageText); // 🔔 Add this line for testing
+                        appendMessage(msg.messageText, msg.isSender, msg.createdDate);
+                        scrollToBottom();
+                    });
+
+
+                    // Start the connection
+                    try {
+                        await connection.start();
+                        console.log("✅ SignalR connected");
+
+                        // Join group AFTER connection established
+                        const decodedPhone = decodeURIComponent(selectedPhone).replace(/&#x2B;|&#43;/g, "+").trim();
+                        await connection.invoke("JoinGroup", decodedPhone);
+                    console.log("✅ Joined SignalR group: [" + decodedPhone + "]");
+
+
+                    } catch (err) {
+                        console.error("❌ SignalR connection error:", err);
+                    }
+                }
+
+
+
+            // Init
+            window.addEventListener("load", async () => {
+                await startSignalR();   // ✅ Ensure SignalR is connected and group joined first
+                await loadMessages();   // ✅ Then load messages after
+                adjustBottomPadding();  // ✅ Still adjust layout on load
+            });
+
+            function filterContacts() {
+                const input = document.getElementById("contactSearch").value.trim().toLowerCase();
+                const list = document.getElementById("contactList");
+                const items = list.querySelectorAll("li");
+
+                let matchFound = false;
+
+                items.forEach(item => {
+                    const text = item.textContent.toLowerCase();
+                    const visible = text.includes(input);
+                    item.style.display = visible ? "block" : "none";
+                    if (visible) matchFound = true;
+                });
+
+                document.getElementById("newContactOption").classList.toggle("d-none", matchFound || input === "");
+            }
+
+            function selectContact(phone) {
+                window.location.href = `/Chat?phone=${encodeURIComponent(phone)}`;
+            }
+
+            function startNewChatFromInput() {
+                const input = document.getElementById("contactSearch").value.trim();
+                if (!input) return;
+                const normalized = input.startsWith("+") ? input : "+" + input;
+                window.location.href = `/Chat?phone=${encodeURIComponent(normalized)}`;
+            }
+
+        
+
+        </script>
+    }
+

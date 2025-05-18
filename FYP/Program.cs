@@ -64,6 +64,7 @@ builder.Services.AddScoped<IContactService, ContactService>();
 builder.Services.AddScoped<IDealService, DealService>();
 builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddSingleton<WhatsAppService>();
+builder.Services.AddSignalR(); // so you can inject IHubContext
 
 builder.Services.AddControllers();
 

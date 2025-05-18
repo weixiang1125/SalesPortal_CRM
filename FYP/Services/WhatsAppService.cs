@@ -7,6 +7,12 @@ public class WhatsAppService
     private readonly HttpClient _httpClient;
     private readonly string _accessToken;
     private readonly string _phoneNumberId;
+    private string NormalizePhone(string phone)
+    {
+        if (string.IsNullOrWhiteSpace(phone)) return phone;
+        phone = phone.Trim().Replace(" ", "");
+        return phone.StartsWith("+") ? phone : "+" + phone;
+    }
 
     public WhatsAppService(IConfiguration config)
     {
@@ -17,6 +23,8 @@ public class WhatsAppService
 
     public async Task<bool> SendTextMessage(string toPhoneNumber, string messageText)
     {
+        toPhoneNumber = NormalizePhone(toPhoneNumber);
+
         var requestUri = $"https://graph.facebook.com/v18.0/{_phoneNumberId}/messages";
 
         var payload = new
@@ -30,7 +38,17 @@ public class WhatsAppService
         var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _accessToken);
 
-        var response = await _httpClient.PostAsync(requestUri, content);
-        return response.IsSuccessStatusCode;
+        try
+        {
+            var response = await _httpClient.PostAsync(requestUri, content);
+            var responseBody = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"📤 WhatsApp SendTextMessage: {response.StatusCode}, Body: {responseBody}");
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("❌ Error sending WhatsApp message: " + ex.Message);
+            return false;
+        }
     }
 }

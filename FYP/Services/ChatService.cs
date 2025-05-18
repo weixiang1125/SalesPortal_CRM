@@ -1,6 +1,8 @@
 ﻿using CRM_API.Services;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using SharedLibrary;
+using SharedLibrary.Hubs;
 using SharedLibrary.Models;
 using Task = System.Threading.Tasks.Task;
 
@@ -8,10 +10,21 @@ public class ChatService : IChatService
 {
     private readonly ApplicationDbContext _context;
     private readonly WhatsAppService _whatsappService;
-    public ChatService(ApplicationDbContext context, WhatsAppService whatsappService)
+    private readonly IHubContext<ChatHub> _hubContext;
+    private string NormalizePhone(string phone)
+    {
+        if (string.IsNullOrWhiteSpace(phone)) return phone;
+        phone = phone.Trim().Replace(" ", "");
+        return phone.StartsWith("+") ? phone : "+" + phone;
+    }
+
+
+
+    public ChatService(ApplicationDbContext context, WhatsAppService whatsappService, IHubContext<ChatHub> hubContext)
     {
         _context = context;
         _whatsappService = whatsappService;
+        _hubContext = hubContext;
     }
 
     public async Task<List<ChatMessage>> GetMessagesAsync(int contactId, int userId)
@@ -30,7 +43,8 @@ public class ChatService : IChatService
     public async Task<bool> SendMessageAsync(SendMessageDTO dto, int userId)
     {
         // 1. Normalize phone number
-        var phone = dto.ContactPhone.StartsWith("+") ? dto.ContactPhone : "+" + dto.ContactPhone;
+        var phone = NormalizePhone(dto.ContactPhone);
+
 
         // 2. Find Contact
         var contact = await _context.DBContacts.FirstOrDefaultAsync(c => c.Phone == phone);
@@ -65,13 +79,24 @@ public class ChatService : IChatService
             IsSender = true,
             CreatedDate = DateTime.UtcNow,
             Status = "Sent",
-            CreatedBy = userId
+            CreatedBy = userId,
+            ContactPhone = contact.Phone
         };
 
         _context.DBChatMessage.Add(message);
         await _context.SaveChangesAsync();
 
+        await _hubContext.Clients.Group(phone).SendAsync("ReceiveMessage", new
+        {
+            messageText = dto.MessageText,
+            isSender = true,
+            createdDate = DateTime.UtcNow
+        });
+
+
         // 5. (Optional) call WhatsApp API here
+        await _whatsappService.SendTextMessage(contact.Phone, dto.MessageText);
+
 
         return true;
     }
@@ -79,30 +104,36 @@ public class ChatService : IChatService
 
     public async Task ReceiveWebhookAsync(ReceiveMessageDTO msg)
     {
-        // 1. Get the user by phone number (your staff)
-        var user = await _context.DBUsers.FirstOrDefaultAsync(u => u.Phone == msg.To);
-        if (user == null) return; // silently ignore
+        var from = NormalizePhone(msg.From);
+        var to = NormalizePhone(msg.To);
 
-        // 2. Get or create the contact
-        var contact = await _context.DBContacts.FirstOrDefaultAsync(c => c.Phone == msg.From);
+        var user = await _context.DBUsers.FirstOrDefaultAsync(u => u.Phone == to);
+        if (user == null)
+        {
+            Console.WriteLine("❌ No user found for 'To' phone: " + to);
+            return;
+        }
+
+        var contact = await _context.DBContacts.FirstOrDefaultAsync(c => c.Phone == from);
         if (contact == null)
         {
+            Console.WriteLine("📌 Creating new contact: " + from);
             contact = new Contact
             {
-                Phone = msg.From,
-                Name = "Unknown " + msg.From,
+                Phone = from,
+                Name = "Unknown " + from,
                 CreatedDate = DateTime.UtcNow
             };
             _context.DBContacts.Add(contact);
             await _context.SaveChangesAsync();
         }
 
-        // 3. Get or create ChatChannel
-        var channel = await _context.DBChatChannel.FirstOrDefaultAsync(c =>
-            c.UserID == user.UserID && c.ContactID == contact.ContactID);
+        var channel = await _context.DBChatChannel
+            .FirstOrDefaultAsync(c => c.UserID == user.UserID && c.ContactID == contact.ContactID);
 
         if (channel == null)
         {
+            Console.WriteLine("📌 Creating new chat channel");
             channel = new ChatChannel
             {
                 UserID = user.UserID,
@@ -114,7 +145,6 @@ public class ChatService : IChatService
             await _context.SaveChangesAsync();
         }
 
-        // 4. Save the incoming message
         var message = new ChatMessage
         {
             ChannelID = channel.ChannelID,
@@ -123,12 +153,24 @@ public class ChatService : IChatService
             IsSender = false,
             CreatedDate = msg.Timestamp ?? DateTime.UtcNow,
             Status = "Received",
-            CreatedBy = user.UserID
+            CreatedBy = user.UserID,
+            ContactPhone = from
         };
 
         _context.DBChatMessage.Add(message);
         await _context.SaveChangesAsync();
+
+        await _hubContext.Clients.Group(from).SendAsync("ReceiveMessage", new
+        {
+            messageText = msg.Message,
+            isSender = false,
+            createdDate = msg.Timestamp ?? DateTime.UtcNow
+        });
+
+
     }
+
+
 
 
 

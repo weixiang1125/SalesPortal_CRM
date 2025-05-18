@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using SharedLibrary;
+using SharedLibrary.Hubs;
 using SharedLibrary.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,6 +16,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
         builder.Configuration.GetConnectionString("DefaultConnection"),
         ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection"))
     ));
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 
@@ -48,5 +50,6 @@ app.Use(async (context, next) =>
 app.UseAuthorization();
 
 app.MapRazorPages();
+app.MapHub<ChatHub>("/chathub");
 
 app.Run();
