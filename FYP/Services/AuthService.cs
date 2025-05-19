@@ -1,6 +1,7 @@
 ﻿using Microsoft.IdentityModel.Tokens;
 using SharedLibrary;
 using SharedLibrary.Models;
+using SharedLibrary.Utils;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -50,7 +51,7 @@ namespace CRM_API.Services
                 Password = hashedPassword,
                 Email = email,
                 Phone = phone,
-                CreatedDate = DateTime.UtcNow,
+                CreatedDate = TimeHelper.Now(),
                 Role = string.IsNullOrEmpty(role) ? "User" : role
             };
 

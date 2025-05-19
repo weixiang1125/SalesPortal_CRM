@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using SharedLibrary;
 using SharedLibrary.Models;
+using SharedLibrary.Utils;
 using System.Net;
 
 namespace CRM_Web.Pages.Chat
@@ -58,7 +59,7 @@ namespace CRM_Web.Pages.Chat
                 {
                     Phone = SelectedPhone,
                     Name = "Unknown " + SelectedPhone,
-                    CreatedDate = DateTime.UtcNow
+                    CreatedDate = TimeHelper.Now()
                 };
                 _context.DBContacts.Add(contact);
                 await _context.SaveChangesAsync();
@@ -74,7 +75,7 @@ namespace CRM_Web.Pages.Chat
                 {
                     UserID = userId,
                     ContactID = contact.ContactID,
-                    CreatedDate = DateTime.UtcNow,
+                    CreatedDate = TimeHelper.Now(),
                     Status = "Active"
                 };
                 _context.DBChatChannel.Add(channel);

@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SharedLibrary;
 using SharedLibrary.Models;
+using SharedLibrary.Utils;
 
 namespace CRM_API.Services
 {
@@ -43,7 +44,7 @@ namespace CRM_API.Services
 
         public async Task<Deal> CreateDealAsync(Deal deal, int userId)
         {
-            deal.CreatedDate = DateTime.UtcNow;
+            deal.CreatedDate = TimeHelper.Now();
             deal.CreatedBy = userId;
 
             _dbContext.DBDeal.Add(deal);
@@ -69,7 +70,7 @@ namespace CRM_API.Services
             existingDeal.ExpectedCloseDate = deal.ExpectedCloseDate;
             existingDeal.ContactID = deal.ContactID;
 
-            existingDeal.UpdatedDate = DateTime.UtcNow;
+            existingDeal.UpdatedDate = TimeHelper.Now();
             existingDeal.UpdatedBy = userId;
 
             // Save the changes

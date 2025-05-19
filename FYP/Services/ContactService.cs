@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SharedLibrary;
 using SharedLibrary.Models;
+using SharedLibrary.Utils;
 
 namespace CRM_API.Services
 {
@@ -40,7 +41,7 @@ namespace CRM_API.Services
 
         public async Task<Contact> CreateContactAsync(Contact contact, int userId)
         {
-            contact.CreatedDate = DateTime.UtcNow;
+            contact.CreatedDate = TimeHelper.Now();
             contact.CreatedBy = userId;  // Make sure to set the CreatedBy user
             _dbContext.DBContacts.Add(contact);
             await _dbContext.SaveChangesAsync();
@@ -58,7 +59,7 @@ namespace CRM_API.Services
             existingContact.Company = contact.Company;
             existingContact.Notes = contact.Notes;
             existingContact.Status = contact.Status;
-            existingContact.UpdatedDate = DateTime.UtcNow;
+            existingContact.UpdatedDate = TimeHelper.Now();
             existingContact.UpdatedBy = userId;
 
             await _dbContext.SaveChangesAsync();

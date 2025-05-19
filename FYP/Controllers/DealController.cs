@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SharedLibrary.DTOs;
 using SharedLibrary.Models;
+using SharedLibrary.Utils;
 using System.Security.Claims;
 
 [ApiController]
@@ -61,7 +62,7 @@ public class DealController : BaseController
     {
         var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 
-        deal.CreatedDate = DateTime.UtcNow;
+        deal.CreatedDate = TimeHelper.Now();
         deal.CreatedBy = userId;
 
         var created = await _dealService.CreateDealAsync(deal, userId);

@@ -3,6 +3,7 @@ using CRM_API.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using SharedLibrary.Hubs;
+using SharedLibrary.Utils;
 
 namespace CRM_API.Controllers
 {
@@ -67,7 +68,8 @@ namespace CRM_API.Controllers
                 string from = msg.From.StartsWith("+") ? msg.From : "+" + msg.From;
                 string text = msg.Text.Body;
                 string name = contact.Profile?.Name;
-                DateTime created = DateTimeOffset.FromUnixTimeSeconds(long.Parse(msg.Timestamp)).UtcDateTime;
+                DateTime utc = DateTimeOffset.FromUnixTimeSeconds(long.Parse(msg.Timestamp)).UtcDateTime;
+                DateTime created = TimeHelper.ConvertToMYT(utc);
 
                 Console.WriteLine($"📥 From {from} ({name}): {text}");
 

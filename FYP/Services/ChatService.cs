@@ -5,7 +5,7 @@ using SharedLibrary;
 using SharedLibrary.Hubs;
 using SharedLibrary.Models;
 using Task = System.Threading.Tasks.Task;
-
+using TimeHelper = SharedLibrary.Utils.TimeHelper;
 public class ChatService : IChatService
 {
     private readonly ApplicationDbContext _context;
@@ -63,7 +63,7 @@ public class ChatService : IChatService
             {
                 UserID = userId,
                 ContactID = contactId,
-                CreatedDate = DateTime.UtcNow,
+                CreatedDate = TimeHelper.Now(),
                 Status = "Active"
             };
             _context.DBChatChannel.Add(channel);
@@ -77,7 +77,7 @@ public class ChatService : IChatService
             MessageText = dto.MessageText,
             MessageType = dto.MessageType,
             IsSender = true,
-            CreatedDate = DateTime.UtcNow,
+            CreatedDate = TimeHelper.Now(),
             Status = "Sent",
             CreatedBy = userId,
             ContactPhone = contact.Phone
@@ -91,7 +91,7 @@ public class ChatService : IChatService
             messageId = message.MessageID,
             messageText = dto.MessageText,
             isSender = true,
-            createdDate = DateTime.UtcNow
+            createdDate = TimeHelper.Now()
         });
 
 
@@ -123,7 +123,7 @@ public class ChatService : IChatService
             {
                 Phone = from,
                 Name = "Unknown " + from,
-                CreatedDate = DateTime.UtcNow
+                CreatedDate = TimeHelper.Now()
             };
             _context.DBContacts.Add(contact);
             await _context.SaveChangesAsync();
@@ -139,7 +139,7 @@ public class ChatService : IChatService
             {
                 UserID = user.UserID,
                 ContactID = contact.ContactID,
-                CreatedDate = DateTime.UtcNow,
+                CreatedDate = TimeHelper.Now(),
                 Status = "Active"
             };
             _context.DBChatChannel.Add(channel);
@@ -152,7 +152,7 @@ public class ChatService : IChatService
             MessageText = msg.Message,
             MessageType = "text",
             IsSender = false,
-            CreatedDate = msg.Timestamp ?? DateTime.UtcNow,
+            CreatedDate = msg.Timestamp ?? TimeHelper.Now(),
             Status = "Received",
             CreatedBy = user.UserID,
             ContactPhone = from
@@ -168,7 +168,7 @@ public class ChatService : IChatService
             messageId = message.MessageID,
             messageText = msg.Message,
             isSender = false,
-            createdDate = msg.Timestamp ?? DateTime.UtcNow
+            createdDate = msg.Timestamp ?? TimeHelper.Now()
         });
 
 

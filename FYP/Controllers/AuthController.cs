@@ -5,6 +5,7 @@ using SharedLibrary.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using TimeHelper = SharedLibrary.Utils.TimeHelper;
 
 namespace CRM_API.Controllers
 {
@@ -57,7 +58,7 @@ namespace CRM_API.Controllers
                     HttpOnly = true,
                     Secure = true,
                     SameSite = SameSiteMode.None,
-                    Expires = DateTime.UtcNow.AddMinutes(_expirationMinutes),
+                    Expires = TimeHelper.Now().AddMinutes(_expirationMinutes),
                     Path = "/",
                     IsEssential = true
                 });
