@@ -88,6 +88,7 @@ public class ChatService : IChatService
 
         await _hubContext.Clients.Group(phone).SendAsync("ReceiveMessage", new
         {
+            messageId = message.MessageID,
             messageText = dto.MessageText,
             isSender = true,
             createdDate = DateTime.UtcNow
@@ -157,11 +158,14 @@ public class ChatService : IChatService
             ContactPhone = from
         };
 
+        Console.WriteLine($"📡 Backend pushing SignalR to group: [{from}]");
+
         _context.DBChatMessage.Add(message);
         await _context.SaveChangesAsync();
 
         await _hubContext.Clients.Group(from).SendAsync("ReceiveMessage", new
         {
+            messageId = message.MessageID,
             messageText = msg.Message,
             isSender = false,
             createdDate = msg.Timestamp ?? DateTime.UtcNow

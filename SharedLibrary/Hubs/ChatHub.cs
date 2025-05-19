@@ -7,11 +7,14 @@ namespace SharedLibrary.Hubs
         public async Task JoinGroup(string groupName)
         {
             await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
+            Console.WriteLine($"✅ User joined group: {groupName} (conn: {Context.ConnectionId})");
         }
 
-        public async Task SendToGroup(string groupName, string messageJson)
+
+        public async Task SendToGroup(string groupName, object message)
         {
-            await Clients.Group(groupName).SendAsync("ReceiveMessage", messageJson);
+            await Clients.Group(groupName).SendAsync("ReceiveMessage", message);
         }
+
     }
 }

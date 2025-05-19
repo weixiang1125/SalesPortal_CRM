@@ -84,6 +84,8 @@ namespace CRM_API.Controllers
 
                 await _chatService.ReceiveWebhookAsync(dto);
 
+                Console.WriteLine($"📡 Broadcasting to SignalR group: [{from}]");
+
                 // ✅ Broadcast via SignalR
                 await _hubContext.Clients.Group(from).SendAsync("ReceiveMessage", new
                 {

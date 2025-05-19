@@ -126,6 +126,7 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
 
         <script>
+            const shownMessageIds = new Set();
 
             const selectedPhone = "@Model.SelectedPhone";
             const chatInput = document.getElementById("chatInput");
@@ -144,10 +145,13 @@
             }
 
 
-            function selectContact(phone) {
-                connection.invoke("JoinGroup", phone.startsWith("+") ? phone : "+" + phone);
-                window.location.href = `/Chat?phone=${encodeURIComponent(phone)}`;
+            async function selectContact(phone) {
+                const normalizedPhone = phone.startsWith("+") ? phone : "+" + phone;
+                await connection.invoke("JoinGroup", normalizedPhone.trim());
+                console.log("✅ Joined group before redirecting:", normalizedPhone);
+                window.location.href = `/Chat?phone=${encodeURIComponent(normalizedPhone)}`;
             }
+
 
 
             function scrollToBottom() {
@@ -173,8 +177,6 @@
 
             window.addEventListener("resize", adjustBottomPadding);
 
-            let connection;
-
                 sendButton.addEventListener("click", async () => {
                     const message = chatInput.value.trim();
                     if (!message) return;
@@ -195,8 +197,6 @@
 
                         if (res.ok) {
                             chatInput.value = "";
-                            // 👇 Show immediately without waiting for SignalR
-                            appendMessage(dto.messageText, true, new Date().toISOString());
                             scrollToBottom();
                         } else {
                             alert("Failed to send message.");
@@ -262,45 +262,68 @@
                 }
 
 
+                    let connection; // declared globally
+                    let hasSignalRStarted = false;
 
-                async function startSignalR() {
-                    connection = new signalR.HubConnectionBuilder()
-                        .withUrl("/chathub")
-                        .build();
+                    async function startSignalR() {
+                        if (connection && connection.state === "Connected") {
+                            console.log("🔁 Disposing existing SignalR connection...");
+                            await connection.stop(); // 🔥 Dispose old connection
+                        }
 
-                    // Setup handler BEFORE starting the connection
-                    connection.on("ReceiveMessage", (msg) => {
-                        console.log("📥 Real-time message received:", msg);
-                        alert("📥 Real-time message received:\n" + msg.messageText); // 🔔 Add this line for testing
-                        appendMessage(msg.messageText, msg.isSender, msg.createdDate);
-                        scrollToBottom();
-                    });
+                        connection = new signalR.HubConnectionBuilder()
+                            .withUrl("https://localhost:44309/chathub", {
+                                withCredentials: true
+                            })
+                            .build();
+
+                        connection.off("ReceiveMessage"); // remove leftover handler
+
+                        connection.on("ReceiveMessage", (msg) => {
+                            console.log("📥 Real-time message received (RAW):", msg);
+
+                            try {
+                                if (typeof msg === "string") msg = JSON.parse(msg);
+                                if (!msg.messageText || !msg.messageId) return;
+
+                                // ✅ Skip duplicate messages by ID
+                                if (shownMessageIds.has(msg.messageId)) return;
+                                shownMessageIds.add(msg.messageId);
+
+                                appendMessage(msg.messageText, msg.isSender, msg.createdDate);
+                                scrollToBottom();
+                            } catch (err) {
+                                console.error("❌ Error in ReceiveMessage:", err, msg);
+                            }
+                        });
 
 
-                    // Start the connection
-                    try {
-                        await connection.start();
-                        console.log("✅ SignalR connected");
-
-                        // Join group AFTER connection established
-                        const decodedPhone = decodeURIComponent(selectedPhone).replace(/&#x2B;|&#43;/g, "+").trim();
-                        await connection.invoke("JoinGroup", decodedPhone);
-                    console.log("✅ Joined SignalR group: [" + decodedPhone + "]");
 
 
-                    } catch (err) {
-                        console.error("❌ SignalR connection error:", err);
+
+                        try {
+                            await connection.start();
+                            console.log("✅ SignalR connected");
+
+                            const rawPhone = "@Html.Raw(Model.SelectedPhone)";
+                            const decodedPhone = decodeURIComponent(rawPhone).replace(/&#x2B;|&#43;/g, "+").trim();
+                            console.log("👥 Joining SignalR group:", decodedPhone);
+                            await connection.invoke("JoinGroup", decodedPhone);
+                        } catch (err) {
+                            console.error("❌ SignalR connection error:", err);
+                        }
                     }
-                }
+
 
 
 
             // Init
             window.addEventListener("load", async () => {
-                await startSignalR();   // ✅ Ensure SignalR is connected and group joined first
-                await loadMessages();   // ✅ Then load messages after
-                adjustBottomPadding();  // ✅ Still adjust layout on load
+                await startSignalR();        // ✅ Handles connection + group join
+                await loadMessages();        // ✅ Pulls missed messages
+                adjustBottomPadding();       // ✅ Adjust layout
             });
+
 
             function filterContacts() {
                 const input = document.getElementById("contactSearch").value.trim().toLowerCase();

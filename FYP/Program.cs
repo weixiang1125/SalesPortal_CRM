@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.CookiePolicy;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using SharedLibrary;
+using SharedLibrary.Hubs;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -83,6 +84,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddAutoMapper(typeof(AutoMapperProfile));
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.WebHost.UseUrls("https://localhost:44309", "https://0.0.0.0:44309");
 
 var app = builder.Build();
 
@@ -109,7 +111,7 @@ app.UseHttpsRedirection();
 app.UseAuthentication(); // Add this line to enable JWT Authentication
 
 app.UseAuthorization();
-
+app.MapHub<ChatHub>("/chathub");
 app.MapControllers();
 
 app.Run();
