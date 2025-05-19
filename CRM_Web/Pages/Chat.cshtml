@@ -41,13 +41,35 @@
         margin-top: 4px;
     }
 
-        .chat-meta.left {
-            text-align: left;
-        }
+    .chat-meta.left {
+        text-align: left;
+    }
 
-        .chat-meta.right {
-            text-align: right;
-        }
+    .chat-meta.right {
+        text-align: right;
+    }
+
+    .day-wrapper {
+        position: sticky;
+        top: 0.5rem;
+        z-index: 10;
+        display: flex;
+        justify-content: center;
+        background: transparent; /* prevent blocking other content */
+        pointer-events: none; /* allow clicks to pass through */
+    }
+
+    .day-label {
+        background-color: #e0e0e0;
+        color: #555;
+        font-size: 0.75rem;
+        padding: 0.25rem 1rem;
+        border-radius: 1rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        pointer-events: auto; /* label still clickable if needed */
+    }
+
+
 
     </style>
 
@@ -156,6 +178,7 @@
 
         <script>
             const shownMessageIds = new Set();
+            let lastMessageDate = null;
 
             const selectedPhone = "@Model.SelectedPhone";
             const chatInput = document.getElementById("chatInput");
@@ -236,28 +259,45 @@
                 });
 
 
-            async function loadMessages() {
-                try {
-                    const normalizedPhone = selectedPhone.startsWith("+") ? selectedPhone : "+" + selectedPhone;
-                    const res = await fetch(`/Chat?handler=Messages&phone=${encodeURIComponent(normalizedPhone)}`);
-                    const messages = await res.json();
+        async function loadMessages() {
+            try {
+                const normalizedPhone = selectedPhone.startsWith("+") ? selectedPhone : "+" + selectedPhone;
+                const res = await fetch(`/Chat?handler=Messages&phone=${encodeURIComponent(normalizedPhone)}`);
+                const messages = await res.json();
 
-                    messageContainer.innerHTML = "";
+                messageContainer.innerHTML = "";
+                lastMessageDate = null; // reset day tracker
 
-                    messages.forEach(msg => {
-                        appendMessage(msg.messageText, msg.isSender, msg.createdDate);
-                    });
+                messages.forEach(msg => {
+                    appendMessage(msg.messageText, msg.isSender, msg.createdDate);
+                });
 
-                    scrollToBottom();
+                scrollToBottom();
 
-                } catch (err) {
-                    console.error("Load error:", err);
-                }
+            } catch (err) {
+                console.error("Load error:", err);
             }
+        }
+
 
             let lastSender = null;
 
-            function appendMessage(messageText, isSender, createdDate) {
+            function appendMessage(messageText, isSender, createdDateRaw) {
+                const createdDate = new Date(createdDateRaw);
+                const createdDay = createdDate.toDateString();
+
+                if (createdDay !== lastMessageDate) {
+                    lastMessageDate = createdDay;
+                    const label = document.createElement("div");
+                    label.className = "day-label";
+                    label.textContent = formatDayLabel(createdDate);
+                    const dayWrapper = document.createElement("div");
+                    dayWrapper.className = "day-wrapper";
+                    dayWrapper.appendChild(label);
+                    messageContainer.appendChild(dayWrapper);
+
+                }
+
                 const wrapper = document.createElement("div");
                 wrapper.className = "mb-2 d-flex flex-column";
                 wrapper.style.alignItems = isSender ? "flex-end" : "flex-start";
@@ -269,7 +309,7 @@
 
                 const time = document.createElement("div");
                 time.className = "chat-meta " + (isSender ? "right" : "left");
-                time.textContent = new Date(createdDate).toLocaleTimeString([], {
+                time.textContent = createdDate.toLocaleTimeString([], {
                     hour: "2-digit",
                     minute: "2-digit",
                 });
@@ -279,6 +319,25 @@
                 messageContainer.appendChild(wrapper);
             }
 
+
+            function formatDayLabel(date) {
+                const today = new Date();
+                const yesterday = new Date();
+                yesterday.setDate(today.getDate() - 1);
+
+                if (date.toDateString() === today.toDateString()) {
+                    return "Today";
+                } else if (date.toDateString() === yesterday.toDateString()) {
+                    return "Yesterday";
+                } else {
+                    return date.toLocaleDateString(undefined, {
+                        weekday: "long",
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric"
+                    });
+                }
+            }
 
 
 
