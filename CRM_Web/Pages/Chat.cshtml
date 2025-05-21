@@ -19,6 +19,16 @@
         background-color: #f5f6fa;
     }
 
+        #chatMessages.loading::before {
+            content: "Loading...";
+            font-size: 0.8rem;
+            color: #888;
+            display: block;
+            text-align: center;
+            padding: 1rem;
+        }
+
+
     .chat-bubble {
         max-width: 75%;
         padding: 0.75rem 1rem;
@@ -120,7 +130,7 @@
                                 <ul id="contactList" class="list-group mb-2">
                                     @foreach (var contact in Model.AllContacts)
                                     {
-                                        <li class="list-group-item list-group-item-action" onclick="selectContact('@contact.Phone')">
+                                        <li class="list-group-item list-group-item-action" onclick="event.preventDefault(); selectChat('@contact.Phone')">
                                             <strong>@contact.Name</strong><br />
                                             <small>@contact.Phone</small>
                                         </li>
@@ -157,7 +167,7 @@
                     var time = item.Date?.ToString("hh:mm tt") ?? "";
 
 
-                    <a href="?phone=@item.Phone" class="list-group-item list-group-item-action @(item.IsActive ? "active" : "")">
+                    <a href="#" onclick="event.preventDefault(); selectChat('@item.Phone')" class="list-group-item list-group-item-action @(item.IsActive ? "active" : "")">
                         <div class="d-flex justify-content-between align-items-center">
                             <strong>@item.Phone</strong>
                             <small class="text-muted">@time</small>
@@ -175,20 +185,7 @@
         <!-- Chat Messages -->
         <div class="col-6 d-flex flex-column bg-light p-0" style="height: calc(100vh - 60px);">
             <div id="chatMessages">
-                @foreach (var msg in Model.Messages)
-                {
-                    <div class="mb-2 d-flex flex-column align-items-@(msg.IsSender.GetValueOrDefault() ? "end" : "start")">
-                        <div class="d-inline-flex flex-column align-items-@(msg.IsSender.GetValueOrDefault() ? "end" : "start")">
-                            <div class="chat-bubble @(msg.IsSender.GetValueOrDefault() ? "sent" : "")">
-                                @msg.MessageText
-                            </div>
-                            <div class="chat-meta @(msg.IsSender.GetValueOrDefault() ? "right" : "left")">
-                                @msg.CreatedDate?.ToString("hh:mm tt")
-                            </div>
-                        </div>
-                    </div>
-
-                }
+                
             </div>
 
             <div id="chatInputBar" class="d-flex border-top px-3 py-2"
@@ -229,7 +226,7 @@
             const shownMessageIds = new Set();
             let lastMessageDate = null;
             const allRecentPhones = @Html.Raw(Json.Serialize(Model.RecentPhones));
-            const selectedPhone = decodeURIComponent("@Model.SelectedPhone".replace(/&#x2B;|&#43;/g, "%2B"));
+            let selectedPhone = decodeURIComponent("@Model.SelectedPhone".replace(/&#x2B;|&#43;/g, "%2B"));
             const chatInput = document.getElementById("chatInput");
             const sendButton = document.getElementById("sendButton");
             const messageContainer = document.getElementById("chatMessages");
@@ -247,24 +244,36 @@
                 }
             }
 
+            async function selectChat(phone) {
+                selectedPhone  = phone.startsWith("+") ? phone : "+" + phone;
 
-            async function selectContact(phone) {
-                const urlParams = new URLSearchParams(window.location.search);
-                const selectedFromUrl = urlParams.get("phone") || "";
-                const normalizedPhone = selectedFromUrl.startsWith("+") ? selectedFromUrl : "+" + selectedFromUrl;
-                await connection.invoke("JoinGroup", normalizedPhone.trim());
-                console.log("✅ Joined group before redirecting:", normalizedPhone);
-                window.location.href = `/Chat?phone=${encodeURIComponent(normalizedPhone)}`;
+                // Update URL without reloading
+                window.history.pushState({}, '', `/Chat?phone=${encodeURIComponent(selectedPhone )}`);
+
+                // Rejoin SignalR group
+                await connection.invoke("JoinGroup", selectedPhone );
+                console.log("✅ Switched to chat:", selectedPhone );
+
+                // Refresh content
+                await loadMessages();
+                await refreshSidebar();
+            }
+
+
+             async function selectContact(phone) {
+                await selectChat(phone); // 
             }
 
 
 
-            function scrollToBottom() {
+
+             function scrollToBottom() {
                 adjustBottomPadding();
-                setTimeout(() => {
+                requestAnimationFrame(() => {
                     messageContainer.scrollTop = messageContainer.scrollHeight;
-                }, 0); // ensure DOM updates before scroll
+                });
             }
+
             window.addEventListener("load", adjustBottomPadding);
 
             chatInput.addEventListener("keydown", function (event) {
@@ -313,37 +322,39 @@
                 });
 
 
-        async function loadMessages() {
-            try {
-                const normalizedPhone = selectedPhone.startsWith("+") ? selectedPhone : "+" + selectedPhone;
+                 async function loadMessages() {
+                    try {
+                        const normalizedPhone = selectedPhone.startsWith("+") ? selectedPhone : "+" + selectedPhone;
 
-                // 1. Load chat messages
-                const res = await fetch(`/Chat?handler=Messages&phone=${encodeURIComponent(normalizedPhone)}`);
-                const messages = await res.json();
+                        // 🔁 Fetch first — don’t clear old messages yet
+                        const res = await fetch(`/Chat?handler=Messages&phone=${encodeURIComponent(normalizedPhone)}`);
+                        const messages = await res.json();
 
-                messageContainer.innerHTML = "";
-                lastMessageDate = null;
+                        // ✅ Only clear DOM now (after we have data)
+                        messageContainer.innerHTML = "";
+                        lastMessageDate = null;
 
-                messages.forEach(msg => {
-                    appendMessage(msg.messageText, msg.isSender, msg.createdDate, msg.timeString);
-                });
+                        messages.forEach(msg => {
+                            appendMessage(msg.messageText, msg.isSender, msg.createdDate, msg.timeString);
+                        });
 
-                scrollToBottom();
+                        scrollToBottom();
 
-                // 2. Mark messages as read (important)
-                await fetch("/Chat?handler=MarkAsRead", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(selectedPhone)
-                });
+                        await fetch("/Chat?handler=MarkAsRead", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(selectedPhone)
+                        });
 
-                // 3. Refresh sidebar to remove unread highlight
-                refreshSidebar();
+                        refreshSidebar();
 
-            } catch (err) {
-                console.error("Load error:", err);
-            }
-        }
+                    } catch (err) {
+                        console.error("Load error:", err);
+                    }
+                }
+
+
+
 
 
 
