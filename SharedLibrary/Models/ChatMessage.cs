@@ -27,5 +27,7 @@ namespace SharedLibrary.Models
         public Users? CreatedByUser { get; set; }
         [ForeignKey("UpdatedBy")]
         public Users? UpdatedByUser { get; set; }
+        public bool? IsRead { get; set; } = false;
+
     }
 }

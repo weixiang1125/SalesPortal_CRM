@@ -1,8 +1,9 @@
-﻿    @page
-    @model CRM_Web.Pages.Chat.IndexModel
-    @{
-        ViewData["Title"] = "Chat";
-    }
+﻿@page
+@model CRM_Web.Pages.Chat.IndexModel
+@attribute [IgnoreAntiforgeryToken]
+@{
+    ViewData["Title"] = "Chat";
+}
 
     <style>
         html, body {
@@ -69,6 +70,27 @@
         pointer-events: auto; /* label still clickable if needed */
     }
 
+    .list-group-item {
+        padding: 0.75rem 1rem;
+    }
+
+    .list-group-item .text-truncate {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+    }
+
+    .list-group-item.active {
+        background-color: #e3f2fd !important; /* Softer blue */
+        border-color: #b6daff !important;
+        color: #000 !important; /* Ensure text is readable */
+    }
+
+    .list-group-item.active strong,
+    .list-group-item.active small,
+    .list-group-item.active div {
+       color: #000 !important;
+    }
 
 
     </style>
@@ -121,8 +143,27 @@
             <ul class="list-group">
                 @foreach (var phone in Model.RecentPhones)
                 {
+                    var lastMessage = Model.LastMessagesByPhone.ContainsKey(phone)
+                    ? Model.LastMessagesByPhone[phone]
+                    : null;
+
+                    var preview = lastMessage?.MessageText?.Length > 30
+                    ? lastMessage.MessageText.Substring(0, 30) + "..."
+                    : lastMessage?.MessageText ?? "";
+
+                    var time = lastMessage?.CreatedDate != null
+                    ? TimeZoneInfo.ConvertTimeFromUtc(lastMessage.CreatedDate.Value, TimeZoneInfo.FindSystemTimeZoneById("Singapore Standard Time")).ToString("hh:mm tt")
+                    : "";
+
+
                     <a href="?phone=@phone" class="list-group-item list-group-item-action @(Model.SelectedPhone == phone ? "active" : "")">
-                        @phone
+                        <div class="d-flex justify-content-between">
+                            <strong>@phone</strong>
+                            <small class="text-muted">@time</small>
+                        </div>
+                        <div class="text-truncate small text-muted" style="max-width: 100%;">
+                            @preview
+                        </div>
                     </a>
                 }
             </ul>
@@ -133,12 +174,18 @@
             <div id="chatMessages">
                 @foreach (var msg in Model.Messages)
                 {
-                    <div class="mb-2 text-@(msg.IsSender.GetValueOrDefault() ? "end" : "start")">
-                        <div class="d-inline-block p-2 rounded @(msg.IsSender.GetValueOrDefault() ? "bg-primary text-white" : "bg-white border")">
-                            @msg.MessageText
+                    <div class="mb-2 d-flex flex-column align-items-@(msg.IsSender.GetValueOrDefault() ? "end" : "start")">
+                        <div class="d-inline-flex flex-column align-items-@(msg.IsSender.GetValueOrDefault() ? "end" : "start")">
+                            <div class="chat-bubble @(msg.IsSender.GetValueOrDefault() ? "sent" : "")">
+                                @msg.MessageText
+                            </div>
+                            <div class="chat-meta @(msg.IsSender.GetValueOrDefault() ? "right" : "left")">
+                                @TimeZoneInfo.ConvertTimeFromUtc(msg.CreatedDate.Value, TimeZoneInfo.FindSystemTimeZoneById("Singapore Standard Time")).ToString("hh:mm tt")
+
+                            </div>
                         </div>
-                        <div class="text-muted small">@msg.CreatedDate?.ToLocalTime().ToString("g")</div>
                     </div>
+
                 }
             </div>
 
@@ -179,11 +226,13 @@
         <script>
             const shownMessageIds = new Set();
             let lastMessageDate = null;
-
-            const selectedPhone = "@Model.SelectedPhone";
+            const allRecentPhones = @Html.Raw(Json.Serialize(Model.RecentPhones));
+            const selectedPhone = decodeURIComponent("@Model.SelectedPhone".replace(/&#x2B;|&#43;/g, "%2B"));
             const chatInput = document.getElementById("chatInput");
             const sendButton = document.getElementById("sendButton");
             const messageContainer = document.getElementById("chatMessages");
+            const currentUserGroup = "user-" + @HttpContext.Session.GetString("UserID");
+
 
             function adjustBottomPadding() {
                 const inputBar = document.getElementById("chatInputBar");
@@ -198,7 +247,9 @@
 
 
             async function selectContact(phone) {
-                const normalizedPhone = phone.startsWith("+") ? phone : "+" + phone;
+                const urlParams = new URLSearchParams(window.location.search);
+                const selectedFromUrl = urlParams.get("phone") || "";
+                const normalizedPhone = selectedFromUrl.startsWith("+") ? selectedFromUrl : "+" + selectedFromUrl;
                 await connection.invoke("JoinGroup", normalizedPhone.trim());
                 console.log("✅ Joined group before redirecting:", normalizedPhone);
                 window.location.href = `/Chat?phone=${encodeURIComponent(normalizedPhone)}`;
@@ -250,6 +301,7 @@
                         if (res.ok) {
                             chatInput.value = "";
                             scrollToBottom();
+                            refreshSidebar();
                         } else {
                             alert("Failed to send message.");
                         }
@@ -262,11 +314,13 @@
         async function loadMessages() {
             try {
                 const normalizedPhone = selectedPhone.startsWith("+") ? selectedPhone : "+" + selectedPhone;
+
+                // 1. Load chat messages
                 const res = await fetch(`/Chat?handler=Messages&phone=${encodeURIComponent(normalizedPhone)}`);
                 const messages = await res.json();
 
                 messageContainer.innerHTML = "";
-                lastMessageDate = null; // reset day tracker
+                lastMessageDate = null;
 
                 messages.forEach(msg => {
                     appendMessage(msg.messageText, msg.isSender, msg.createdDate);
@@ -274,10 +328,21 @@
 
                 scrollToBottom();
 
+                // 2. Mark messages as read (important)
+                await fetch("/Chat?handler=MarkAsRead", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(selectedPhone)
+                });
+
+                // 3. Refresh sidebar to remove unread highlight
+                refreshSidebar();
+
             } catch (err) {
                 console.error("Load error:", err);
             }
         }
+
 
 
             let lastSender = null;
@@ -319,6 +384,58 @@
                 messageContainer.appendChild(wrapper);
             }
 
+            async function refreshSidebar() {
+                try {
+                    const res = await fetch("/Chat?handler=Sidebar");
+                    const data = await res.json();
+                    if (!data.success) return;
+
+                    const list = document.querySelector(".list-group");
+                    list.innerHTML = ""; // Clear current chat list
+
+                    const updatedPhones = data.phones ?? [];
+
+                    data.lastMessages.forEach(msg => {
+                        const time = msg.date
+                            ? new Date(msg.date).toLocaleTimeString("en-MY", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                hour12: true,
+                                timeZone: "Asia/Kuala_Lumpur"
+                            })
+                            : "";
+
+                        const preview = msg.text?.length > 30 ? msg.text.substring(0, 30) + "..." : msg.text ?? "";
+
+                        const activeClass = msg.phone === selectedPhone ? "active" : "";
+                        const unreadClass = msg.isUnread && msg.phone !== selectedPhone ? "fw-bold text-primary" : "";
+
+                        list.innerHTML += `
+            <a href="?phone=${encodeURIComponent(msg.phone)}" class="list-group-item list-group-item-action ${activeClass}">
+                <div class="d-flex justify-content-between">
+                    <strong>${msg.phone}</strong>
+                    <small class="text-muted">${time}</small>
+                </div>
+                <div class="text-truncate small text-muted ${unreadClass}" style="max-width: 100%;">
+                    ${preview}
+                </div>
+            </a>`;
+                    });
+
+                    // 🧠 Re-join SignalR groups for any new phone numbers
+                    for (const phone of updatedPhones) {
+                        if (!allRecentPhones.includes(phone)) {
+                            allRecentPhones.push(phone);
+                            await connection.invoke("JoinGroup", phone);
+                            console.log("📡 Dynamically joined new SignalR group:", phone);
+                        }
+                    }
+
+                } catch (err) {
+                    console.error("Failed to refresh sidebar:", err);
+                }
+            }
+
 
             function formatDayLabel(date) {
                 const today = new Date();
@@ -339,60 +456,77 @@
                 }
             }
 
-
-
-
                     let connection; // declared globally
                     let hasSignalRStarted = false;
 
-                    async function startSignalR() {
-                        if (connection && connection.state === "Connected") {
-                            console.log("🔁 Disposing existing SignalR connection...");
-                            await connection.stop(); // 🔥 Dispose old connection
-                        }
-
-                        connection = new signalR.HubConnectionBuilder()
-                            .withUrl("https://localhost:44309/chathub", {
-                                withCredentials: true
-                            })
-                            .build();
-
-                        connection.off("ReceiveMessage"); // remove leftover handler
-
-                        connection.on("ReceiveMessage", (msg) => {
-                            console.log("📥 Real-time message received (RAW):", msg);
-
-                            try {
-                                if (typeof msg === "string") msg = JSON.parse(msg);
-                                if (!msg.messageText || !msg.messageId) return;
-
-                                // ✅ Skip duplicate messages by ID
-                                if (shownMessageIds.has(msg.messageId)) return;
-                                shownMessageIds.add(msg.messageId);
-
-                                appendMessage(msg.messageText, msg.isSender, msg.createdDate);
-                                scrollToBottom();
-                            } catch (err) {
-                                console.error("❌ Error in ReceiveMessage:", err, msg);
-                            }
-                        });
-
-
-
-
-
-                        try {
-                            await connection.start();
-                            console.log("✅ SignalR connected");
-
-                            const rawPhone = "@Html.Raw(Model.SelectedPhone)";
-                            const decodedPhone = decodeURIComponent(rawPhone).replace(/&#x2B;|&#43;/g, "+").trim();
-                            console.log("👥 Joining SignalR group:", decodedPhone);
-                            await connection.invoke("JoinGroup", decodedPhone);
-                        } catch (err) {
-                            console.error("❌ SignalR connection error:", err);
-                        }
+                async function startSignalR() {
+                    if (connection && connection.state === "Connected") {
+                        console.log("🔁 Disposing existing SignalR connection...");
+                        await connection.stop(); // disconnect old connection
                     }
+
+                    connection = new signalR.HubConnectionBuilder()
+                        .withUrl("https://25bd-2001-f40-974-801e-9421-3fb1-d6f1-1e75.ngrok-free.app/chathub", {
+                            withCredentials: true
+                        })
+                        .build();
+
+                    connection.off("ReceiveMessage");
+                    connection.off("RefreshSidebar");
+
+                    connection.on("ReceiveMessage", (msg) => {
+                        try {
+                            if (typeof msg === "string") msg = JSON.parse(msg);
+
+                                function normalizePhone(phone) {
+                                    return phone?.toString().trim().replace(/\s+/g, "").replace(/^(\+)?/, "+");
+                                }
+
+                                if (normalizePhone(msg.contactPhone) !== normalizePhone(selectedPhone)) {
+                                    console.log("⛔ Ignoring message not for active chat:", msg.contactPhone, "(expected:", normalizePhone(selectedPhone) + ")");
+                                    return;
+                                }
+
+
+
+                            if (!msg.messageText || !msg.messageId || shownMessageIds.has(msg.messageId)) return;
+                            console.log("📥 Received message:", msg.messageId, msg);
+
+                            shownMessageIds.add(msg.messageId);
+                            appendMessage(msg.messageText, msg.isSender, msg.createdDate);
+                            scrollToBottom();
+                            refreshSidebar();
+
+                        } catch (err) {
+                            console.error("❌ Error in ReceiveMessage:", err, msg);
+                        }
+                    });
+
+
+                    connection.on("RefreshSidebar", (phone) => {
+                        console.log("📣 Sidebar refresh triggered for:", phone);
+                        refreshSidebar();
+                    });
+
+                    try {
+                        await connection.start();
+                        console.log("✅ SignalR connected");
+
+                        // ✅ Join all recent phone groups
+                        for (const phone of allRecentPhones) {
+                            const normalized = phone.trim();
+                            await connection.invoke("JoinGroup", normalized);
+                            console.log("🔗 Joined SignalR group:", normalized);
+                        }
+
+                        // ✅ Join CRM user’s own group
+                        await connection.invoke("JoinGroup", currentUserGroup);
+                        console.log("🔗 Joined user SignalR group:", currentUserGroup);
+
+                    } catch (err) {
+                        console.error("❌ SignalR connection error:", err);
+                    }
+                }
 
 
 

@@ -90,9 +90,12 @@ public class ChatService : IChatService
         {
             messageId = message.MessageID,
             messageText = dto.MessageText,
+            contactPhone = phone,
             isSender = true,
-            createdDate = TimeHelper.Now()
+            createdDate = TimeHelper.Now(),
         });
+
+        await _hubContext.Clients.Group(phone).SendAsync("RefreshSidebar", phone);
 
 
         // 5. (Optional) call WhatsApp API here
@@ -167,15 +170,18 @@ public class ChatService : IChatService
         {
             messageId = message.MessageID,
             messageText = msg.Message,
+            contactPhone = from,
             isSender = false,
             createdDate = msg.Timestamp ?? TimeHelper.Now()
         });
 
 
+        // ✅ Also notify the user's sidebar group
+        string userGroup = $"user-{user.UserID}";
+        await _hubContext.Clients.Group(userGroup).SendAsync("RefreshSidebar", from);
+
+
+
+
     }
-
-
-
-
-
 }
