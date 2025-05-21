@@ -413,15 +413,20 @@
                         const unreadClass = msg.isUnread && msg.phone !== selectedPhone ? "fw-bold text-primary" : "";
 
                         list.innerHTML += `
-            <a href="?phone=${encodeURIComponent(msg.phone)}" class="list-group-item list-group-item-action ${activeClass}">
-                <div class="d-flex justify-content-between">
-                    <strong>${msg.phone}</strong>
-                    <small class="text-muted">${time}</small>
-                </div>
-                <div class="text-truncate small text-muted ${unreadClass}" style="max-width: 100%;">
-                    ${preview}
-                </div>
-            </a>`;
+                    <a href="?phone=${encodeURIComponent(msg.phone)}" class="list-group-item list-group-item-action ${activeClass}">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <strong>${msg.phone}</strong>
+                            <small class="text-muted">${time}</small>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="text-truncate small text-muted ${activeClass}" style="max-width: 85%;">
+                                ${preview}
+                            </div>
+                            ${msg.unreadCount > 0 && msg.phone !== selectedPhone
+                                ? `<span class="badge bg-danger ms-2">${msg.unreadCount}</span>`
+                                : ""}
+                        </div>
+                    </a>`;
                     });
 
                     // 🧠 Re-join SignalR groups for any new phone numbers

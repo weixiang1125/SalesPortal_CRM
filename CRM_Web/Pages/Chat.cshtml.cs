@@ -162,14 +162,16 @@ namespace CRM_Web.Pages.Chat
                     .OrderByDescending(m => m.CreatedDate)
                     .FirstOrDefaultAsync();
 
-                bool isUnread = lastMsg != null && lastMsg.IsSender == false && lastMsg.IsRead == false;
+                int unreadCount = await _context.DBChatMessage
+                    .Where(m => m.ChannelID == chanId && m.IsSender == false && m.IsRead == false)
+                    .CountAsync();
 
                 lastMessages.Add(new
                 {
                     phone = normalized,
                     text = lastMsg?.MessageText,
                     date = lastMsg?.CreatedDate,
-                    isUnread
+                    unreadCount
                 });
             }
 
