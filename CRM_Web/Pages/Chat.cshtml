@@ -397,20 +397,24 @@
 
                     const updatedPhones = data.phones ?? [];
 
+                    let lastGroup = "";
                     data.lastMessages.forEach(msg => {
+                        const group = msg.group || "";
+                        if (group !== lastGroup) {
+                            list.innerHTML += `
+                                <li class="list-group-item text-center text-muted small bg-light sticky-top" style="z-index:1;">
+                                    ${group}
+                                </li>`;
+                            lastGroup = group;
+                        }
+
                         const time = msg.date
                             ? new Date(msg.date).toLocaleTimeString("en-MY", {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                                hour12: true,
-                                timeZone: "Asia/Kuala_Lumpur"
-                            })
-                            : "";
+                                hour: "2-digit", minute: "2-digit", hour12: true, timeZone: "Asia/Kuala_Lumpur"
+                            }) : "";
 
                         const preview = msg.text?.length > 30 ? msg.text.substring(0, 30) + "..." : msg.text ?? "";
-
                         const activeClass = msg.phone === selectedPhone ? "active" : "";
-                        const unreadClass = msg.isUnread && msg.phone !== selectedPhone ? "fw-bold text-primary" : "";
 
                         list.innerHTML += `
                     <a href="?phone=${encodeURIComponent(msg.phone)}" class="list-group-item list-group-item-action ${activeClass}">
@@ -419,7 +423,7 @@
                             <small class="text-muted">${time}</small>
                         </div>
                         <div class="d-flex justify-content-between align-items-center">
-                            <div class="text-truncate small text-muted ${activeClass}" style="max-width: 85%;">
+                            <div class="text-truncate small text-muted" style="max-width: 85%;">
                                 ${preview}
                             </div>
                             ${msg.unreadCount > 0 && msg.phone !== selectedPhone

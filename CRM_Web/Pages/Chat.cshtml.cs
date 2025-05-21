@@ -166,12 +166,25 @@ namespace CRM_Web.Pages.Chat
                     .Where(m => m.ChannelID == chanId && m.IsSender == false && m.IsRead == false)
                     .CountAsync();
 
+                string groupLabel = "";
+                if (lastMsg?.CreatedDate != null)
+                {
+                    var msgDate = TimeHelper.ConvertToMYT(lastMsg.CreatedDate.Value).Date;
+                    var today = TimeHelper.Now().Date;
+                    var yesterday = today.AddDays(-1);
+
+                    groupLabel = msgDate == today ? "Today"
+                               : msgDate == yesterday ? "Yesterday"
+                               : msgDate.ToString("MMMM dd, yyyy");
+                }
+
                 lastMessages.Add(new
                 {
                     phone = normalized,
                     text = lastMsg?.MessageText,
                     date = lastMsg?.CreatedDate,
-                    unreadCount
+                    unreadCount,
+                    group = groupLabel
                 });
             }
 
