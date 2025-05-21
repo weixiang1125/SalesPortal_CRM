@@ -140,7 +140,8 @@
                 </div>
             </div>
 
-            <ul class="list-group">
+            <ul class="list-group sidebar-list">
+
                 @foreach (var phone in Model.RecentPhones)
                 {
                     var lastMessage = Model.LastMessagesByPhone.ContainsKey(phone)
@@ -390,7 +391,8 @@
                     const data = await res.json();
                     if (!data.success) return;
 
-                    const list = document.querySelector(".list-group");
+                    const list = document.querySelector(".sidebar-list");
+
                     list.innerHTML = ""; // Clear current chat list
 
                     const updatedPhones = data.phones ?? [];
