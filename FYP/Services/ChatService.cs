@@ -93,19 +93,35 @@ public class ChatService : IChatService
             contactPhone = phone,
             isSender = true,
             createdDate = message.CreatedDate, //  use the actual saved timestamp
-            timeString = message.CreatedDate?.ToString("hh:mm tt") ?? ""
+            timeString = message.CreatedDate?.ToString("hh:mm tt") ?? "",
+            messageType = message.MessageType
         });
 
         await _hubContext.Clients.Group(phone).SendAsync("RefreshSidebar", phone);
 
 
         // 5. (Optional) call WhatsApp API here
-        await _whatsappService.SendTextMessage(contact.Phone, dto.MessageText);
-
+        await _whatsappService.SendMessageAsync(message);
 
         return true;
     }
 
+    public async Task SaveMessageAsync(ChatMessage message)
+    {
+        _context.DBChatMessage.Add(message);
+        await _context.SaveChangesAsync();
+
+        await _hubContext.Clients.Group(message.ContactPhone).SendAsync("ReceiveMessage", new
+        {
+            messageId = message.MessageID,
+            messageText = message.MessageText,
+            contactPhone = message.ContactPhone,
+            isSender = message.IsSender,
+            createdDate = message.CreatedDate,
+            timeString = message.CreatedDate?.ToString("hh:mm tt") ?? "",
+            messageType = message.MessageType
+        });
+    }
 
     public async Task ReceiveWebhookAsync(ReceiveMessageDTO msg)
     {
@@ -173,8 +189,9 @@ public class ChatService : IChatService
             messageText = msg.Message,
             contactPhone = from,
             isSender = false,
-            createdDate = message.CreatedDate, //  use the saved value
-            timeString = message.CreatedDate?.ToString("hh:mm tt") ?? ""
+            createdDate = message.CreatedDate,
+            timeString = message.CreatedDate?.ToString("hh:mm tt") ?? "",
+            messageType = message.MessageType
         });
 
 

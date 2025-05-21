@@ -259,8 +259,10 @@ namespace CRM_Web.Pages.Chat
                 .OrderBy(m => m.CreatedDate)
                 .Select(m => new
                 {
+                    messageId = m.MessageID,
                     messageText = m.MessageText,
                     isSender = m.IsSender,
+                    messageType = m.MessageType,
                     createdDate = m.CreatedDate, //  No conversion here
                     timeString = m.CreatedDate.Value.ToString("hh:mm tt") //  Just format it
                 })

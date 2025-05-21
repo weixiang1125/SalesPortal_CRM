@@ -205,17 +205,27 @@
                 </div>
 
                 <!-- Message input bar -->
-                <div id="chatInputBar" class="d-flex border-top px-3 py-2"
+                <div id="chatInputBar" class="d-flex flex-column border-top px-3 py-2"
                      style="position: sticky; bottom: 0; background-color: #f8f9fa; z-index: 10;">
-                    <textarea id="chatInput" class="form-control me-2"
-                              rows="1"
-                              placeholder="Type a message..."
-                              style="resize: none; max-height: 150px; overflow-y: auto;"></textarea>
+                    <div class="d-flex align-items-center w-100">
+                        <label class="btn btn-outline-secondary me-2 mb-0">
+                            📎
+                            <input type="file" id="fileInput" hidden />
+                        </label>
+                        <textarea id="chatInput" class="form-control me-2"
+                                  rows="1"
+                                  placeholder="Type a message..."
+                                  style="resize: none; max-height: 150px; overflow-y: auto;"></textarea>
+                        <button id="sendButton" class="btn btn-primary">Send</button>
+                    </div>
 
-                    <button id="sendButton" class="btn btn-primary">Send</button>
+                    <div id="uploadProgress" class="w-100 mt-2 d-none">
+                        <div class="progress" style="height: 6px;">
+                            <div id="uploadProgressBar" class="progress-bar" style="width: 0%;"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
-
 
         <!-- Contact Info -->
         <div class="col-3 border-start bg-white p-3">
@@ -285,6 +295,58 @@
                 await selectChat(phone); // 
             }
 
+            document.getElementById("fileInput").addEventListener("change", function () {
+                const file = this.files[0];
+                if (!file) return;
+
+                const formData = new FormData();
+                formData.append("file", file);
+                formData.append("contactPhone", selectedPhone);
+
+                const xhr = new XMLHttpRequest();
+
+                xhr.open("POST", "https://localhost:44309/api/chat/upload");
+                xhr.withCredentials = true;
+
+                xhr.upload.addEventListener("progress", function (e) {
+                    if (e.lengthComputable) {
+                        const percent = (e.loaded / e.total) * 100;
+                        document.getElementById("uploadProgress").classList.remove("d-none");
+                        document.getElementById("uploadProgressBar").style.width = percent + "%";
+                    }
+                });
+
+                xhr.onload = async function () {
+                    document.getElementById("uploadProgressBar").style.width = "100%";
+                    setTimeout(() => {
+                        document.getElementById("uploadProgress").classList.add("d-none");
+                        document.getElementById("uploadProgressBar").style.width = "0%";
+                    }, 500);
+
+                    if (xhr.status === 200) {
+                        const result = JSON.parse(xhr.responseText);
+                        console.log("Upload complete:", result);
+
+                        if (result.messageId) {
+                            shownMessageIds.add(result.messageId);
+                        }
+
+                        setTimeout(scrollToBottom, 100);
+                        refreshSidebar();
+                    } else {
+                        alert("Upload failed");
+                    }
+                };
+
+                xhr.onerror = function () {
+                    alert("Upload failed");
+                };
+
+                xhr.send(formData);
+            });
+
+
+
 
 
 
@@ -351,10 +413,14 @@
                         lastMessageDate = null;
 
                         messages.forEach(msg => {
-                            appendMessage(msg.messageText, msg.isSender, msg.createdDate, msg.timeString);
+                            if (!shownMessageIds.has(msg.messageId)) {
+                                shownMessageIds.add(msg.messageId);
+                                appendMessage(msg.messageText, msg.isSender, msg.createdDate, msg.timeString, msg.messageType);
+                            }
                         });
 
-                        scrollToBottom();
+
+                    setTimeout(scrollToBottom, 50);
 
                         await fetch("/Chat?handler=MarkAsRead", {
                             method: "POST",
@@ -370,45 +436,81 @@
                 }
 
 
+                function getFullUrl(path) {
+                    const current = window.location.origin;
+                    const api = current.replace("44373", "44309"); // frontend → backend
+                    return path.startsWith("http") ? path : api + path;
+                }
+
 
 
 
 
             let lastSender = null;
 
-            function appendMessage(messageText, isSender, createdDateRaw, timeString) {
-                const createdDate = new Date(createdDateRaw);
-                const createdDay = createdDate.toDateString();
+                function appendMessage(messageText, isSender, createdDateRaw, timeString, messageType = "text") {
+                    const createdDate = new Date(createdDateRaw);
+                    const createdDay = createdDate.toDateString();
 
-                if (createdDay !== lastMessageDate) {
-                    lastMessageDate = createdDay;
-                    const label = document.createElement("div");
-                    label.className = "day-label";
-                    label.textContent = formatDayLabel(createdDate);
-                    const dayWrapper = document.createElement("div");
-                    dayWrapper.className = "day-wrapper";
-                    dayWrapper.appendChild(label);
-                    document.getElementById("chatMessages").appendChild(dayWrapper);
-                    observer.observe(label);
+                    if (createdDay !== lastMessageDate) {
+                        lastMessageDate = createdDay;
+                        const label = document.createElement("div");
+                        label.className = "day-label";
+                        label.textContent = formatDayLabel(createdDate);
+                        const dayWrapper = document.createElement("div");
+                        dayWrapper.className = "day-wrapper";
+                        dayWrapper.appendChild(label);
+                        messageContainer.appendChild(dayWrapper);
+                        observer.observe(label);
+                    }
+
+                    const wrapper = document.createElement("div");
+                    wrapper.className = "mb-2 d-flex flex-column";
+                    wrapper.style.alignItems = isSender ? "flex-end" : "flex-start";
+
+                    const bubble = document.createElement("div");
+                    bubble.className = "chat-bubble";
+                    if (isSender) bubble.classList.add("sent");
+
+                    // Render content based on type
+                    if (messageType === "image") {
+                        const img = document.createElement("img");
+                        img.src = getFullUrl(messageText);
+                        img.alt = "image";
+                        img.style.maxWidth = "200px";
+                        img.style.borderRadius = "0.5rem";
+                        bubble.appendChild(img);
+                    } else if (messageType === "video") {
+                        const video = document.createElement("video");
+                        video.src = getFullUrl(messageText);
+                        video.controls = true;
+                        video.style.maxWidth = "250px";
+                        bubble.appendChild(video);
+                    } else if (messageType === "audio") {
+                        const audio = document.createElement("audio");
+                        audio.src = getFullUrl(messageText);
+                        audio.controls = true;
+                        bubble.appendChild(audio);
+                    } else if (messageType === "document") {
+                        const link = document.createElement("a");
+                        link.href = getFullUrl(messageText);
+                        link.textContent = "📄 Download Document";
+                        link.target = "_blank";
+                        bubble.appendChild(link);
+                    } else {
+                        bubble.innerHTML = messageText.replace(/\n/g, "<br>");
+                    }
+
+                    const time = document.createElement("div");
+                    time.className = "chat-meta " + (isSender ? "right" : "left");
+                    time.textContent = timeString;
+
+                    wrapper.appendChild(bubble);
+                    wrapper.appendChild(time);
+                    messageContainer.appendChild(wrapper);
                 }
 
-                const wrapper = document.createElement("div");
-                wrapper.className = "mb-2 d-flex flex-column";
-                wrapper.style.alignItems = isSender ? "flex-end" : "flex-start";
 
-                const bubble = document.createElement("div");
-                bubble.className = "chat-bubble";
-                if (isSender) bubble.classList.add("sent");
-                bubble.innerHTML = messageText.replace(/\n/g, "<br>");
-
-                const time = document.createElement("div");
-                time.className = "chat-meta " + (isSender ? "right" : "left");
-                time.textContent = timeString; // ✅ Use the backend-preformatted time
-
-                wrapper.appendChild(bubble);
-                wrapper.appendChild(time);
-                document.getElementById("chatMessages").appendChild(wrapper);
-            }
 
 
             async function refreshSidebar() {
@@ -500,8 +602,10 @@
                         await connection.stop(); // disconnect old connection
                     }
 
+                    const hubUrl = window.location.origin.replace("44373", "44309") + "/chathub";
+
                     connection = new signalR.HubConnectionBuilder()
-                        .withUrl("https://25bd-2001-f40-974-801e-9421-3fb1-d6f1-1e75.ngrok-free.app/chathub", {
+                    .withUrl(hubUrl, {
                             withCredentials: true
                         })
                         .build();
@@ -513,29 +617,27 @@
                         try {
                             if (typeof msg === "string") msg = JSON.parse(msg);
 
-                                function normalizePhone(phone) {
-                                    return phone?.toString().trim().replace(/\s+/g, "").replace(/^(\+)?/, "+");
-                                }
+                            function normalizePhone(phone) {
+                                return phone?.toString().trim().replace(/\s+/g, "").replace(/^(\+)?/, "+");
+                            }
 
-                                if (normalizePhone(msg.contactPhone) !== normalizePhone(selectedPhone)) {
-                                    console.log("⛔ Ignoring message not for active chat:", msg.contactPhone, "(expected:", normalizePhone(selectedPhone) + ")");
-                                    return;
-                                }
-
-
+                            if (normalizePhone(msg.contactPhone) !== normalizePhone(selectedPhone)) {
+                                console.log("⛔ Ignoring message not for active chat:", msg.contactPhone);
+                                return;
+                            }
 
                             if (!msg.messageText || !msg.messageId || shownMessageIds.has(msg.messageId)) return;
-                            console.log("📥 Received message:", msg.messageId, msg);
 
                             shownMessageIds.add(msg.messageId);
-                            appendMessage(msg.messageText, msg.isSender, msg.createdDate, msg.timeString);
+                            appendMessage(msg.messageText, msg.isSender, msg.createdDate, msg.timeString, msg.messageType); // ✅ Add messageType here
+                            setTimeout(scrollToBottom, 50);
                             scrollToBottom();
                             refreshSidebar();
-
                         } catch (err) {
                             console.error("❌ Error in ReceiveMessage:", err, msg);
                         }
                     });
+
 
 
                     connection.on("RefreshSidebar", (phone) => {

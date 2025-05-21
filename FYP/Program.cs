@@ -74,10 +74,16 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("https://localhost:44373") // Your frontend URL
-              .AllowCredentials()
-              .AllowAnyHeader()
-              .AllowAnyMethod();
+        policy
+            .SetIsOriginAllowed(origin =>
+            {
+                if (string.IsNullOrEmpty(origin)) return false;
+                var host = new Uri(origin).Host;
+                return host == "localhost" || host.EndsWith("ngrok-free.app");
+            })
+            .AllowCredentials()
+            .AllowAnyHeader()
+            .AllowAnyMethod();
     });
 });
 
@@ -107,9 +113,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 // Enable Authentication middleware
 app.UseAuthentication(); // Add this line to enable JWT Authentication
-
+app.UseCors("AllowFrontend");
 app.UseAuthorization();
 app.MapHub<ChatHub>("/chathub");
 app.MapControllers();

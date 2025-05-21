@@ -8,6 +8,7 @@ namespace CRM_API.Services
         Task<List<ChatMessage>> GetMessagesAsync(int contactId, int userId);
         Task<bool> SendMessageAsync(SendMessageDTO dto, int userId);
         Task ReceiveWebhookAsync(ReceiveMessageDTO dto);
+        Task SaveMessageAsync(ChatMessage message);
 
     }
 }
