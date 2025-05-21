@@ -142,28 +142,30 @@
 
             <ul class="list-group sidebar-list">
 
-                @foreach (var phone in Model.RecentPhones)
+                @{
+                    string lastGroup = "";
+                }
+                @foreach (var item in Model.GroupedLastMessages)
                 {
-                    var lastMessage = Model.LastMessagesByPhone.ContainsKey(phone)
-                    ? Model.LastMessagesByPhone[phone]
-                    : null;
+                    if (item.Group != lastGroup)
+                    {
+                        <li class="list-group-item text-center text-muted small bg-light sticky-top">@item.Group</li>
+                        lastGroup = item.Group;
+                    }
 
-                    var preview = lastMessage?.MessageText?.Length > 30
-                    ? lastMessage.MessageText.Substring(0, 30) + "..."
-                    : lastMessage?.MessageText ?? "";
-
-                    var time = lastMessage?.CreatedDate != null
-                    ? TimeZoneInfo.ConvertTimeFromUtc(lastMessage.CreatedDate.Value, TimeZoneInfo.FindSystemTimeZoneById("Singapore Standard Time")).ToString("hh:mm tt")
-                    : "";
+                    var preview = item.Text?.Length > 30 ? item.Text.Substring(0, 30) + "..." : item.Text;
+                    var time = item.Date?.ToString("hh:mm tt") ?? "";
 
 
-                    <a href="?phone=@phone" class="list-group-item list-group-item-action @(Model.SelectedPhone == phone ? "active" : "")">
-                        <div class="d-flex justify-content-between">
-                            <strong>@phone</strong>
+                    <a href="?phone=@item.Phone" class="list-group-item list-group-item-action @(item.IsActive ? "active" : "")">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <strong>@item.Phone</strong>
                             <small class="text-muted">@time</small>
                         </div>
-                        <div class="text-truncate small text-muted" style="max-width: 100%;">
-                            @preview
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="text-truncate small text-muted" style="max-width: 85%;">
+                                @preview
+                            </div>
                         </div>
                     </a>
                 }
@@ -181,8 +183,7 @@
                                 @msg.MessageText
                             </div>
                             <div class="chat-meta @(msg.IsSender.GetValueOrDefault() ? "right" : "left")">
-                                @TimeZoneInfo.ConvertTimeFromUtc(msg.CreatedDate.Value, TimeZoneInfo.FindSystemTimeZoneById("Singapore Standard Time")).ToString("hh:mm tt")
-
+                                @msg.CreatedDate?.ToString("hh:mm tt")
                             </div>
                         </div>
                     </div>
@@ -324,7 +325,7 @@
                 lastMessageDate = null;
 
                 messages.forEach(msg => {
-                    appendMessage(msg.messageText, msg.isSender, msg.createdDate);
+                    appendMessage(msg.messageText, msg.isSender, msg.createdDate, msg.timeString);
                 });
 
                 scrollToBottom();
@@ -348,7 +349,7 @@
 
             let lastSender = null;
 
-            function appendMessage(messageText, isSender, createdDateRaw) {
+            function appendMessage(messageText, isSender, createdDateRaw, timeString) {
                 const createdDate = new Date(createdDateRaw);
                 const createdDay = createdDate.toDateString();
 
@@ -361,7 +362,6 @@
                     dayWrapper.className = "day-wrapper";
                     dayWrapper.appendChild(label);
                     messageContainer.appendChild(dayWrapper);
-
                 }
 
                 const wrapper = document.createElement("div");
@@ -375,15 +375,13 @@
 
                 const time = document.createElement("div");
                 time.className = "chat-meta " + (isSender ? "right" : "left");
-                time.textContent = createdDate.toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                });
+                time.textContent = timeString; // ✅ Use the backend-preformatted time
 
                 wrapper.appendChild(bubble);
                 wrapper.appendChild(time);
                 messageContainer.appendChild(wrapper);
             }
+
 
             async function refreshSidebar() {
                 try {
@@ -408,10 +406,8 @@
                             lastGroup = group;
                         }
 
-                        const time = msg.date
-                            ? new Date(msg.date).toLocaleTimeString("en-MY", {
-                                hour: "2-digit", minute: "2-digit", hour12: true, timeZone: "Asia/Kuala_Lumpur"
-                            }) : "";
+                        const time = msg.timeString ?? "";
+
 
                         const preview = msg.text?.length > 30 ? msg.text.substring(0, 30) + "..." : msg.text ?? "";
                         const activeClass = msg.phone === selectedPhone ? "active" : "";
@@ -504,7 +500,7 @@
                             console.log("📥 Received message:", msg.messageId, msg);
 
                             shownMessageIds.add(msg.messageId);
-                            appendMessage(msg.messageText, msg.isSender, msg.createdDate);
+                            appendMessage(msg.messageText, msg.isSender, msg.createdDate, msg.timeString);
                             scrollToBottom();
                             refreshSidebar();
 

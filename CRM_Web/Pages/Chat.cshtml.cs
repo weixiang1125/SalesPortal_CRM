@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using SharedLibrary;
+using SharedLibrary.DTOs;
 using SharedLibrary.Models;
 using SharedLibrary.Utils;
 using System.Net;
@@ -21,6 +22,7 @@ namespace CRM_Web.Pages.Chat
         public List<ChatMessage> Messages { get; set; } = new();
         public List<Contact> AllContacts { get; set; } = new();
         public Dictionary<string, ChatMessage?> LastMessagesByPhone { get; set; } = new();
+        public List<SidebarChatItem> GroupedLastMessages { get; set; } = new();
 
         [BindProperty] public string SelectedPhone { get; set; } = "";
         [BindProperty] public string MessageText { get; set; } = "";
@@ -45,13 +47,11 @@ namespace CRM_Web.Pages.Chat
             // Load all contacts for modal
             AllContacts = await _context.DBContacts.OrderBy(c => c.Name).ToListAsync();
 
-            // Normalize and ensure only ONE "+" and no spaces
+            // Normalize selected phone
             var raw = WebUtility.HtmlDecode(phone ?? RecentPhones.FirstOrDefault() ?? string.Empty)
                 .Replace(" ", "")
                 .Trim();
-
             SelectedPhone = raw.StartsWith("+") ? raw : "+" + raw;
-
 
             // Ensure the contact exists
             var contact = await _context.DBContacts.FirstOrDefaultAsync(c => c.Phone == SelectedPhone);
@@ -90,7 +90,12 @@ namespace CRM_Web.Pages.Chat
                 .OrderBy(m => m.CreatedDate)
                 .ToListAsync();
 
-            // Prepare last message preview for every recent phone
+            // Timezone conversion reference
+            var mytZone = TimeZoneInfo.FindSystemTimeZoneById("Singapore Standard Time");
+            var today = TimeHelper.Now().Date;
+            var yesterday = today.AddDays(-1);
+
+            // Build grouped sidebar
             foreach (var phoneNum in RecentPhones)
             {
                 var normalized = phoneNum.Trim();
@@ -99,14 +104,12 @@ namespace CRM_Web.Pages.Chat
                     .Where(c => c.Phone == normalized)
                     .Select(c => c.ContactID)
                     .FirstOrDefaultAsync();
-
                 if (contactId == 0) continue;
 
                 var chanId = await _context.DBChatChannel
                     .Where(c => c.UserID == userId && c.ContactID == contactId)
                     .Select(c => c.ChannelID)
                     .FirstOrDefaultAsync();
-
                 if (chanId == 0) continue;
 
                 var lastMsg = await _context.DBChatMessage
@@ -115,10 +118,37 @@ namespace CRM_Web.Pages.Chat
                     .FirstOrDefaultAsync();
 
                 LastMessagesByPhone[normalized] = lastMsg;
+
+                DateTime? localDate = null;
+                string group = "";
+
+                if (lastMsg?.CreatedDate != null)
+                {
+                    localDate = lastMsg.CreatedDate;
+
+                    var msgDay = localDate.Value.Date;
+                    group = msgDay == today ? "Today"
+                          : msgDay == yesterday ? "Yesterday"
+                          : msgDay.ToString("MMMM dd, yyyy");
+                }
+
+                GroupedLastMessages.Add(new SidebarChatItem
+                {
+                    Phone = normalized,
+                    Text = lastMsg?.MessageText ?? "",
+                    Date = localDate,
+                    Group = group,
+                    IsActive = SelectedPhone == normalized
+                });
             }
+
+            GroupedLastMessages = GroupedLastMessages
+                .OrderByDescending(m => m.Date)
+                .ToList();
 
             return Page();
         }
+
 
         public async Task<JsonResult> OnGetSidebarAsync()
         {
@@ -169,7 +199,7 @@ namespace CRM_Web.Pages.Chat
                 string groupLabel = "";
                 if (lastMsg?.CreatedDate != null)
                 {
-                    var msgDate = TimeHelper.ConvertToMYT(lastMsg.CreatedDate.Value).Date;
+                    var msgDate = lastMsg.CreatedDate.Value.Date;
                     var today = TimeHelper.Now().Date;
                     var yesterday = today.AddDays(-1);
 
@@ -178,14 +208,18 @@ namespace CRM_Web.Pages.Chat
                                : msgDate.ToString("MMMM dd, yyyy");
                 }
 
+                var convertedDate = lastMsg?.CreatedDate;
+
                 lastMessages.Add(new
                 {
                     phone = normalized,
                     text = lastMsg?.MessageText,
-                    date = lastMsg?.CreatedDate,
+                    date = convertedDate,
+                    timeString = convertedDate?.ToString("hh:mm tt"),
                     unreadCount,
                     group = groupLabel
                 });
+
             }
 
             return new JsonResult(new
@@ -198,6 +232,7 @@ namespace CRM_Web.Pages.Chat
 
         public async Task<IActionResult> OnGetMessagesAsync(string phone)
         {
+
             var userIdStr = HttpContext.Session.GetString("UserID");
             if (string.IsNullOrEmpty(userIdStr))
                 return new JsonResult(new List<ChatMessage>());
@@ -226,9 +261,11 @@ namespace CRM_Web.Pages.Chat
                 {
                     messageText = m.MessageText,
                     isSender = m.IsSender,
-                    createdDate = m.CreatedDate
+                    createdDate = m.CreatedDate, //  No conversion here
+                    timeString = m.CreatedDate.Value.ToString("hh:mm tt") //  Just format it
                 })
-                .ToListAsync();
+                .ToListAsync(); //  This is what makes the query awaitable
+
 
             return new JsonResult(messages);
         }

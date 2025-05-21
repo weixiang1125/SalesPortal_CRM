@@ -92,7 +92,8 @@ public class ChatService : IChatService
             messageText = dto.MessageText,
             contactPhone = phone,
             isSender = true,
-            createdDate = TimeHelper.Now(),
+            createdDate = message.CreatedDate, //  use the actual saved timestamp
+            timeString = message.CreatedDate?.ToString("hh:mm tt") ?? ""
         });
 
         await _hubContext.Clients.Group(phone).SendAsync("RefreshSidebar", phone);
@@ -172,7 +173,8 @@ public class ChatService : IChatService
             messageText = msg.Message,
             contactPhone = from,
             isSender = false,
-            createdDate = msg.Timestamp ?? TimeHelper.Now()
+            createdDate = message.CreatedDate, //  use the saved value
+            timeString = message.CreatedDate?.ToString("hh:mm tt") ?? ""
         });
 
 
