@@ -221,10 +221,10 @@ namespace CRM_Web.Pages.Chat
                     phone = normalized,
                     text = lastMsg == null ? "" :
                        lastMsg.MessageType == "text" ? lastMsg.MessageText :
-                       lastMsg.MessageType == "image" ? "?? Photo" :
-                       lastMsg.MessageType == "video" ? "?? Video" :
-                       lastMsg.MessageType == "audio" ? "?? Audio" :
-                       lastMsg.MessageType == "document" ? "?? Document" :
+                       lastMsg.MessageType == "image" ? "[Photo]" :
+                       lastMsg.MessageType == "video" ? "[Video]" :
+                       lastMsg.MessageType == "audio" ? "[Audio]" :
+                       lastMsg.MessageType == "document" ? "[Document]" :
                        "[File]",
 
                     date = convertedDate,
