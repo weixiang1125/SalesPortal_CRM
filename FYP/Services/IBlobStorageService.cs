@@ -14,7 +14,9 @@ namespace CRM_API.Services
 
         public BlobStorageService(IConfiguration configuration)
         {
-            _connectionString = configuration.GetConnectionString("AzureBlob");
+            _connectionString = Environment.GetEnvironmentVariable("AZURE_BLOB_KEY")
+                 ?? configuration.GetConnectionString("AzureBlob");
+
         }
 
         public async Task<string> UploadFileAsync(Stream fileStream, string fileName, string contentType)
