@@ -11,6 +11,8 @@ public class ChatService : IChatService
     private readonly ApplicationDbContext _context;
     private readonly WhatsAppService _whatsappService;
     private readonly IHubContext<ChatHub> _hubContext;
+    private readonly IServiceProvider _serviceProvider;
+
     private string NormalizePhone(string phone)
     {
         if (string.IsNullOrWhiteSpace(phone)) return phone;
@@ -18,13 +20,28 @@ public class ChatService : IChatService
         return phone.StartsWith("+") ? phone : "+" + phone;
     }
 
+    private string GetMimeType(string ext)
+    {
+        return ext switch
+        {
+            ".jpg" => "image/jpeg",
+            ".png" => "image/png",
+            ".mp4" => "video/mp4",
+            ".ogg" => "audio/ogg",
+            ".pdf" => "application/pdf",
+            ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            ".xlsx" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            _ => "application/octet-stream"
+        };
+    }
 
 
-    public ChatService(ApplicationDbContext context, WhatsAppService whatsappService, IHubContext<ChatHub> hubContext)
+    public ChatService(ApplicationDbContext context, WhatsAppService whatsappService, IHubContext<ChatHub> hubContext, IServiceProvider serviceProvider)
     {
         _context = context;
         _whatsappService = whatsappService;
         _hubContext = hubContext;
+        _serviceProvider = serviceProvider;
     }
 
     public async Task<List<ChatMessage>> GetMessagesAsync(int contactId, int userId)
@@ -123,15 +140,16 @@ public class ChatService : IChatService
             _ => ".bin"
         };
 
-        string filename = Guid.NewGuid() + ext;
-        string savePath = Path.Combine("wwwroot", "uploads", filename);
-        Console.WriteLine(" Downloading media for ID: " + mediaId);
-        Console.WriteLine(" Saving to: " + savePath);
-        Directory.CreateDirectory(Path.GetDirectoryName(savePath)!);
-        await File.WriteAllBytesAsync(savePath, bytes);
+        string fileName = Guid.NewGuid() + ext;
 
-        return $"/uploads/{filename}";
+        // ✅ Upload to Azure Blob
+        using var stream = new MemoryStream(bytes);
+        var blobService = _serviceProvider.GetRequiredService<IBlobStorageService>();
+        var blobUrl = await blobService.UploadFileAsync(stream, fileName, GetMimeType(ext));
+
+        return blobUrl;
     }
+
 
 
     public async Task SaveMessageAsync(ChatMessage message)
@@ -198,7 +216,7 @@ public class ChatService : IChatService
         {
             ChannelID = channel.ChannelID,
             MessageText = msg.Message,
-            MessageType = "text",
+            MessageType = msg.MessageType,
             IsSender = false,
             CreatedDate = msg.Timestamp ?? TimeHelper.Now(),
             Status = "Received",

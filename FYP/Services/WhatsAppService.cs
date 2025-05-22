@@ -68,7 +68,7 @@ public class WhatsAppService
 
         if (type != "text")
         {
-            string fullLink = $"{_baseUrl.TrimEnd('/')}{message.MessageText}";
+            string fullLink = message.MessageText;
             Console.WriteLine($"📸 Final WhatsApp media link: {fullLink}");
         }
         object payload = type switch
@@ -85,28 +85,28 @@ public class WhatsAppService
                 messaging_product = "whatsapp",
                 to = toPhoneNumber,
                 type = "image",
-                image = new { link = $"{_baseUrl.TrimEnd('/')}{message.MessageText}" }
+                image = new { link = message.MessageText }
             },
             "video" => new
             {
                 messaging_product = "whatsapp",
                 to = toPhoneNumber,
                 type = "video",
-                video = new { link = $"{_baseUrl.TrimEnd('/')}{message.MessageText}" }
+                video = new { link = message.MessageText }
             },
             "audio" => new
             {
                 messaging_product = "whatsapp",
                 to = toPhoneNumber,
                 type = "audio",
-                audio = new { link = $"{_baseUrl.TrimEnd('/')}{message.MessageText}" }
+                audio = new { link = message.MessageText }
             },
             "document" => new
             {
                 messaging_product = "whatsapp",
                 to = toPhoneNumber,
                 type = "document",
-                document = new { link = $"{_baseUrl.TrimEnd('/')}{message.MessageText}" }
+                document = new { link = message.MessageText }
             },
             _ => null
         };

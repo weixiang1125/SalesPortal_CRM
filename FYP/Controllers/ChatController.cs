@@ -1,7 +1,6 @@
 ﻿using CRM_API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SharedLibrary.Models;
 using System.Security.Claims;
 
 namespace CRM_API.Controllers
@@ -49,7 +48,7 @@ namespace CRM_API.Controllers
         }
 
         [HttpPost("upload")]
-        public async Task<IActionResult> Upload(IFormFile file, [FromForm] string contactPhone)
+        public async Task<IActionResult> Upload(IFormFile file, [FromForm] string contactPhone, [FromServices] IBlobStorageService blobService)
         {
             if (file == null || file.Length == 0)
                 return BadRequest("File is empty");
@@ -66,39 +65,20 @@ namespace CRM_API.Controllers
             else if (mime.StartsWith("audio/")) type = "audio";
             else if (ext == ".pdf" || ext == ".docx" || ext == ".xlsx") type = "document";
 
-            var uploadsDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
-            if (!Directory.Exists(uploadsDir)) Directory.CreateDirectory(uploadsDir);
+            var uniqueFileName = Guid.NewGuid().ToString() + ext;
+            var blobUrl = await blobService.UploadFileAsync(file.OpenReadStream(), uniqueFileName, mime);
 
-            var uniqueFileName = Guid.NewGuid() + ext;
-            var filePath = Path.Combine(uploadsDir, uniqueFileName);
-
-            using (var stream = new FileStream(filePath, FileMode.Create))
-            {
-                await file.CopyToAsync(stream);
-            }
-
-            var message = new ChatMessage
-            {
-                ContactPhone = contactPhone,
-                MessageText = $"/uploads/{uniqueFileName}",
-                MessageType = type,
-                CreatedDate = DateTime.UtcNow,
-                IsSender = true
-            };
-
-            // ✅ Save & push to SignalR
             var dto = new SendMessageDTO
             {
                 ContactPhone = contactPhone,
-                MessageText = $"/uploads/{uniqueFileName}",
+                MessageText = blobUrl,
                 MessageType = type
             };
 
             await _chatService.SendMessageAsync(dto, GetUserId().Value);
-
-            // Optional: if you want to return messageId, you can refactor SendMessageAsync to return it
-            return Ok(new { url = dto.MessageText, type });
+            return Ok(new { url = blobUrl, type });
         }
+
 
 
         // 🔐 Helper to safely extract user ID from token
