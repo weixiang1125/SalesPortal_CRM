@@ -4,6 +4,7 @@
 @{
     ViewData["Title"] = "Chat";
 }
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 
     <style>
         html, body {
@@ -249,8 +250,9 @@
 
     @section Scripts {
         <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
-
+            
         <script>
+            window.API_BASE_URL = '@Configuration["ApiSettings:BaseUrl"]';
             const shownMessageIds = new Set();
             let lastMessageDate = null;
             const allRecentPhones = @Html.Raw(Json.Serialize(Model.RecentPhones));
@@ -304,8 +306,8 @@
                 formData.append("contactPhone", selectedPhone);
 
                 const xhr = new XMLHttpRequest();
+                xhr.open("POST", `${window.API_BASE_URL}/api/chat/upload`)
 
-                xhr.open("POST", "https://localhost:44309/api/chat/upload");
                 xhr.withCredentials = true;
 
                 xhr.upload.addEventListener("progress", function (e) {
@@ -380,7 +382,7 @@
                     };
 
                     try {
-                        const res = await fetch("https://localhost:44309/api/chat/send", {
+                        const res = await fetch(`${window.API_BASE_URL}/api/chat/send`, {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             credentials: "include",
@@ -601,8 +603,8 @@
                         console.log("🔁 Disposing existing SignalR connection...");
                         await connection.stop(); // disconnect old connection
                     }
+                    const hubUrl = `${window.API_BASE_URL}/chathub`;
 
-                    const hubUrl = window.location.origin.replace("44373", "44309") + "/chathub";
 
                     connection = new signalR.HubConnectionBuilder()
                     .withUrl(hubUrl, {

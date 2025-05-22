@@ -3,6 +3,7 @@
 @{
     Layout = null; // optional: no layout for registration page
 }
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 
 <!DOCTYPE html>
 <html lang="en">
@@ -116,6 +117,7 @@
 </html>
 
 <script>
+    window.API_BASE_URL = '@Configuration["ApiSettings:BaseUrl"]';
     document.getElementById('registerForm').addEventListener('submit', function(event) {
         event.preventDefault(); // Prevent the form from submitting normally
 
@@ -134,7 +136,7 @@
         };
 
         // Send the data using Fetch API
-        fetch('https://localhost:44309/api/Auth/register', {  // Adjust the URL to match your backend endpoint
+        fetch(`${window.API_BASE_URL}/api/Auth/register`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

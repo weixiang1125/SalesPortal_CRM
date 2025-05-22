@@ -1,6 +1,7 @@
 ﻿@{
     Layout = null;
 }
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 
 @{
     var username = Context.Session.GetString("Username");

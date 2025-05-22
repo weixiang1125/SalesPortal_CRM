@@ -39,6 +39,25 @@ public class WhatsAppService
             Console.WriteLine("⚠️ Using fallback BaseUrl from appsettings.json: " + _baseUrl);
         }
     }
+    public async Task<string?> GetMediaUrlAsync(string mediaId)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, $"https://graph.facebook.com/v18.0/{mediaId}");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _accessToken);
+        var response = await _httpClient.SendAsync(request);
+        if (!response.IsSuccessStatusCode) return null;
+
+        var json = await response.Content.ReadAsStringAsync();
+        var doc = JsonDocument.Parse(json);
+        return doc.RootElement.GetProperty("url").GetString();
+    }
+
+    public async Task<byte[]> DownloadBytesAsync(string url)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, url);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _accessToken);
+        var response = await _httpClient.SendAsync(request);
+        return await response.Content.ReadAsByteArrayAsync();
+    }
 
     public async Task<bool> SendMessageAsync(ChatMessage message)
     {

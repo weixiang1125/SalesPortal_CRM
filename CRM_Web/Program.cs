@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using SharedLibrary;
 using SharedLibrary.Hubs;
-using SharedLibrary.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +9,7 @@ builder.Services.Configure<ApiSettings>(builder.Configuration.GetSection("ApiSet
 builder.Services.AddRazorPages();
 builder.Services.AddHttpClient();
 builder.Services.AddSession(); // add this before builder.Build()
+
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseMySql(

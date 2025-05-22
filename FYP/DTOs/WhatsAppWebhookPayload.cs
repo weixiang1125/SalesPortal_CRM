@@ -1,4 +1,3 @@
-
 namespace CRM_API.DTOs
 {
     public class WhatsAppWebhookPayload
@@ -52,8 +51,24 @@ namespace CRM_API.DTOs
         public string Id { get; set; }
         public string Timestamp { get; set; }
         public string Type { get; set; }
+
         public MessageText Text { get; set; }
+
+
+        public MediaContent Image { get; set; }
+        public MediaContent Video { get; set; }
+        public MediaContent Audio { get; set; }
+        public MediaContent Document { get; set; }
     }
+
+    public class MediaContent
+    {
+        public string Id { get; set; }
+        public string MimeType { get; set; }
+        public string Sha256 { get; set; }
+        public string Filename { get; set; }
+    }
+
 
     public class MessageText
     {

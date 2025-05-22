@@ -3,6 +3,8 @@
 @{
     Layout = null; // optional: no layout for login
 }
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -124,10 +126,12 @@
 </html>
 
 <script>
-           document.getElementById('loginForm').addEventListener('submit', function(event) {
+        window.API_BASE_URL = '@Configuration["ApiSettings:BaseUrl"]';
+        window.FRONTEND_BASE_URL = window.location.origin;
+        document.getElementById('loginForm').addEventListener('submit', function(event) {
         event.preventDefault();
 
-        fetch('https://localhost:44309/api/Auth/login', {
+        fetch(`${window.API_BASE_URL}/api/Auth/login`, {
             method: 'POST',
             credentials: 'include', // Include cookies in the request
             headers: { 'Content-Type': 'application/json' },
@@ -176,7 +180,7 @@
                     })
                 });
 
-                window.location.href = 'https://localhost:44373/Dashboard'; // Redirect to dashboard
+                   window.location.href = `${window.FRONTEND_BASE_URL}/Dashboard`; // Redirect to dashboard
             } else {
                 const error = responseText ? JSON.parse(responseText) : { message: "Login failed" };
                 showError(error.message);

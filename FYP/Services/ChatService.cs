@@ -106,6 +106,34 @@ public class ChatService : IChatService
         return true;
     }
 
+    public async Task<string> DownloadMediaAndSaveAsync(string mediaId, string type)
+    {
+        var urlRes = await _whatsappService.GetMediaUrlAsync(mediaId);
+        if (string.IsNullOrEmpty(urlRes)) return "";
+
+        var bytes = await _whatsappService.DownloadBytesAsync(urlRes);
+        if (bytes == null || bytes.Length == 0) return "";
+
+        string ext = type switch
+        {
+            "image" => ".jpg",
+            "video" => ".mp4",
+            "audio" => ".ogg",
+            "document" => ".pdf",
+            _ => ".bin"
+        };
+
+        string filename = Guid.NewGuid() + ext;
+        string savePath = Path.Combine("wwwroot", "uploads", filename);
+        Console.WriteLine(" Downloading media for ID: " + mediaId);
+        Console.WriteLine(" Saving to: " + savePath);
+        Directory.CreateDirectory(Path.GetDirectoryName(savePath)!);
+        await File.WriteAllBytesAsync(savePath, bytes);
+
+        return $"/uploads/{filename}";
+    }
+
+
     public async Task SaveMessageAsync(ChatMessage message)
     {
         _context.DBChatMessage.Add(message);
@@ -123,7 +151,7 @@ public class ChatService : IChatService
         });
     }
 
-    public async Task ReceiveWebhookAsync(ReceiveMessageDTO msg)
+    public async Task<ChatMessage?> ReceiveWebhookAsync(ReceiveMessageDTO msg)
     {
         var from = NormalizePhone(msg.From);
         var to = NormalizePhone(msg.To);
@@ -132,7 +160,7 @@ public class ChatService : IChatService
         if (user == null)
         {
             Console.WriteLine("❌ No user found for 'To' phone: " + to);
-            return;
+            return null;
         }
 
         var contact = await _context.DBContacts.FirstOrDefaultAsync(c => c.Phone == from);
@@ -199,7 +227,7 @@ public class ChatService : IChatService
         string userGroup = $"user-{user.UserID}";
         await _hubContext.Clients.Group(userGroup).SendAsync("RefreshSidebar", from);
 
-
+        return message;
 
 
     }

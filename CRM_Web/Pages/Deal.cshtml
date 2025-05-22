@@ -3,6 +3,7 @@
 @{
     ViewData["Title"] = "Deals";
 }
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 
 <h2 class="mb-4">Deals</h2>
 
@@ -234,12 +235,13 @@
 
 
     <script>
+        window.API_BASE_URL = '@Configuration["ApiSettings:BaseUrl"]';
         let cachedContacts = [];
 
         async function loadContacts() {
             console.log("🟡 Calling loadContacts()");
             try {
-                const response = await fetch("https://localhost:44309/api/Contact/GetContactsByUserId", {
+                    const response = await fetch(`${window.API_BASE_URL}/api/Contact/GetContactsByUserId`, {
                     credentials: "include"
                 });
 
@@ -335,7 +337,7 @@
                 };
 
                 $.ajax({
-                    url: 'https://localhost:44309/api/Deal/CreateDeal',
+                    url: `${window.API_BASE_URL}/api/Deal/CreateDeal`,
                     type: 'POST',
                     contentType: 'application/json',                 
                     data: JSON.stringify(formData),
@@ -366,7 +368,7 @@
                 };
 
                 $.ajax({
-                    url: `https://localhost:44309/api/Deal/UpdateDealById/${formData.DealID}`,
+                    url: `${window.API_BASE_URL}/api/Deal/UpdateDealById/${formData.DealID}`,
                     type: 'PUT',
                     contentType: 'application/json',
                     xhrFields: {
@@ -389,7 +391,7 @@
             try {
                 console.log("🟢 Edit clicked: dealId =", dealId);
 
-                const dealResponse = await fetch(`https://localhost:44309/api/Deal/GetDealById/${dealId}`, {
+                    const dealResponse = await fetch(`${window.API_BASE_URL}/api/Deal/GetDealById/${dealId}`, {
                     credentials: "include"
                 });
                 const deal = await dealResponse.json();
@@ -422,7 +424,7 @@
         function confirmDelete(dealId) {
             if (confirm("Are you sure you want to delete this deal?")) {
                 $.ajax({
-                    url: `https://localhost:44309/api/Deal/DeleteDealById/${dealId}`,
+                    url: `${window.API_BASE_URL}/api/Deal/DeleteDealById/${dealId}`,
                     type: "DELETE",
                     xhrFields: {
                         withCredentials: true  // Ensures cookies are sent

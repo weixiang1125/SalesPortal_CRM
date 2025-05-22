@@ -135,7 +135,13 @@ namespace CRM_Web.Pages.Chat
                 GroupedLastMessages.Add(new SidebarChatItem
                 {
                     Phone = normalized,
-                    Text = lastMsg?.MessageText ?? "",
+                    Text = lastMsg == null ? "" :
+                       lastMsg.MessageType == "text" ? lastMsg.MessageText :
+                       lastMsg.MessageType == "image" ? "?? Photo" :
+                       lastMsg.MessageType == "video" ? "?? Video" :
+                       lastMsg.MessageType == "audio" ? "?? Audio" :
+                       lastMsg.MessageType == "document" ? "?? Document" :
+                       "[File]",
                     Date = localDate,
                     Group = group,
                     IsActive = SelectedPhone == normalized
@@ -213,7 +219,14 @@ namespace CRM_Web.Pages.Chat
                 lastMessages.Add(new
                 {
                     phone = normalized,
-                    text = lastMsg?.MessageText,
+                    text = lastMsg == null ? "" :
+                       lastMsg.MessageType == "text" ? lastMsg.MessageText :
+                       lastMsg.MessageType == "image" ? "?? Photo" :
+                       lastMsg.MessageType == "video" ? "?? Video" :
+                       lastMsg.MessageType == "audio" ? "?? Audio" :
+                       lastMsg.MessageType == "document" ? "?? Document" :
+                       "[File]",
+
                     date = convertedDate,
                     timeString = convertedDate?.ToString("hh:mm tt"),
                     unreadCount,

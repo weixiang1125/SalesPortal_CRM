@@ -3,6 +3,9 @@
 @{
     ViewData["Title"] = "Contacts";
 }
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+
+
 <h2 class="mb-4">Contacts</h2>
 
 <div class="mb-3">
@@ -163,10 +166,12 @@ else
     <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
 
     <script>
+        window.API_BASE_URL = '@Configuration["ApiSettings:BaseUrl"]';
+
         function confirmDelete(contactId) {
             if (confirm("Are you sure you want to delete this contact?")) {
                 $.ajax({
-                    url: `https://localhost:44309/api/Contact/DeleteContactById/${contactId}`,
+                    url: `${window.API_BASE_URL}/api/Contact/DeleteContactById/${contactId}`,
                     type: 'DELETE',
                     xhrFields: { withCredentials: true },
                     success: function () {
@@ -224,7 +229,7 @@ else
                 };
 
                 $.ajax({
-                    url: 'https://localhost:44309/api/Contact/CreateContact',
+                    url: `${window.API_BASE_URL}/api/Contact/CreateContact`,
                     type: 'POST',
                     contentType: 'application/json',
                     data: JSON.stringify(formData),
@@ -254,7 +259,7 @@ else
                 };
 
                 $.ajax({
-                    url: `https://localhost:44309/api/Contact/UpdateContactById/${contactId}`,
+                    url: `${window.API_BASE_URL}/api/Contact/UpdateContactById/${contactId}`,
                     type: 'PUT',
                     contentType: 'application/json',
                     data: JSON.stringify(formData),
@@ -273,7 +278,7 @@ else
                 const contactId = $(this).data("contactid");
 
                 $.ajax({
-                    url: `https://localhost:44309/api/Contact/GetContactById/${contactId}`,
+                    url: `${window.API_BASE_URL}/api/Contact/GetContactById/${contactId}`,
                     type: 'GET',
                     xhrFields: { withCredentials: true },
                     success: function (contact) {

@@ -75,17 +75,16 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy
-            .SetIsOriginAllowed(origin =>
-            {
-                if (string.IsNullOrEmpty(origin)) return false;
-                var host = new Uri(origin).Host;
-                return host == "localhost" || host.EndsWith("ngrok-free.app");
-            })
-            .AllowCredentials()
+            .WithOrigins(
+                "https://localhost:44373", // local frontend
+                "https://salesportalweb-b4bxgxg0ghd0asbc.southeastasia-01.azurewebsites.net" // deployed frontend
+            )
             .AllowAnyHeader()
-            .AllowAnyMethod();
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
+
 
 builder.Services.AddAutoMapper(typeof(AutoMapperProfile));
 builder.Services.AddEndpointsApiExplorer();
@@ -95,7 +94,7 @@ builder.WebHost.UseUrls("https://localhost:44309", "https://0.0.0.0:44309");
 var app = builder.Build();
 
 
-app.UseCors("AllowFrontend");
+
 
 // Add this after UseCors()
 app.UseCookiePolicy(new CookiePolicyOptions
@@ -106,11 +105,9 @@ app.UseCookiePolicy(new CookiePolicyOptions
 });
 
 // Configure the HTTP request pipeline
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
+
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
