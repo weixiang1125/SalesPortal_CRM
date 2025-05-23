@@ -85,5 +85,18 @@ namespace CRM_API.Services
             _dbContext.DBDeal.Remove(deal);
             return await _dbContext.SaveChangesAsync() > 0;
         }
+
+        public async Task<bool> UpdateDealStageAsync(int dealId, string newStage, int updatedBy)
+        {
+            var deal = await _dbContext.DBDeal.FindAsync(dealId);
+            if (deal == null) return false;
+
+            deal.Stage = newStage;
+            deal.UpdatedBy = updatedBy;
+            deal.UpdatedDate = TimeHelper.Now();
+
+            return await _dbContext.SaveChangesAsync() > 0;
+        }
+
     }
 }

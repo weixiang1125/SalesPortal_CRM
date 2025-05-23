@@ -8,9 +8,10 @@
 <h2 class="mb-4">Deals</h2>
 
 <div class="mb-3">
-    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createDealModal">
+    <button class="btn btn-primary" id="btnCreateDeal">
         <i class="fas fa-plus"></i> Create Deal
     </button>
+
 </div>
 
 <div class="mb-3">
@@ -20,143 +21,73 @@
 </div>
 
 <div id="tableView">
-    @if (Model.DealModel.Deals != null && Model.DealModel.Deals.Any())
-    {
-        <table id="dealsTable" class="table table-bordered table-striped">
-            <thead class="table-dark">
-                <tr>
-                    <th>Deal ID</th>
-                    <th>Deal Name</th>
-                    <th>Value</th>
-                    <th>Stage</th>
-                    <th>Status</th>
-                    <th>Expected Close</th>
-                    <th>Created Date</th>
-                    <th>Created By</th>
-                    <th>Updated Date</th>         
-                    <th>Updated By</th>
-                    <th>Contact</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var deal in Model.DealModel.Deals)
-                {
-                    <tr id="dealRow-@deal.DealID">
-                        <td>@deal.DealID</td>
-                        <td class="dealName">@deal.DealName</td>
-                        <td class="dealValue">@(deal.Value?.ToString("C") ?? "-")</td>
-                        <td class="dealStage">@deal.Stage</td>
-                        <td class="dealStatus">@deal.Status</td>
-                        <td class="dealCloseDate">@(deal.ExpectedCloseDate?.ToShortDateString() ?? "-")</td>
-                        <td>@deal.CreatedDate?.ToString("g")</td>
-                        <td>@deal.CreatedByUsername</td>
-                        <td>@deal.UpdatedDate?.ToString("g")</td>
-                        <td>@deal.UpdatedByUsername</td>
-                        <td>@deal.ContactName</td>
-                        <td>
-                            <button class="btn btn-sm btn-primary me-1 btn-edit" data-bs-toggle="modal" data-bs-target="#editDealModal" data-dealid="@deal.DealID">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="btn btn-sm btn-danger" onclick="confirmDelete('@deal.DealID')">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    }
-    else
-    {
-        <div class="alert alert-info">No deals available.</div>
-    }
+    <table id="dealsTable" class="table table-bordered table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>#</th>
+                <th>Deal Name</th>
+                <th>Value</th>
+                <th>Stage</th>
+                <th>Status</th>
+                <th>Expected Close</th>
+                <th class="admin-column">Created Date</th>
+                <th class="admin-column">Created By</th>
+                <th class="admin-column">Updated Date</th>
+                <th class="admin-column">Updated By</th>
+                <th>Contact</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="dealsTableBody"></tbody>
+    </table>
 </div>
 
-<!-- Kanban View -->
-<div id="kanbanView" class="mt-3" style="display: none;">
-    @{
-        var stages = new[] { "Proposal", "Negotiation", "Closing", "Retention" };
-    }
-
-    <div class="row g-4">
-        @foreach (var stage in stages)
-        {
+<div id="kanbanView" class="row g-4" style="display: none;">
+    @foreach (var stage in new[] { "Proposal", "Negotiation", "Closing", "Retention" })
+    {
             <div class="col-md-3">
                 <div class="card border-dark shadow-sm h-100">
                     <div class="card-header bg-dark text-white">
                         <strong>@stage</strong>
                     </div>
-                    <div class="card-body" style="min-height: 300px;">
-                        @if (Model.DealModel.Deals != null && Model.DealModel.Deals.Any(d => d.Stage == stage))
-                        {
-                            foreach (var deal in Model.DealModel.Deals.Where(d => d.Stage == stage))
-                            {
-                                <div class="card mb-3 border-primary deal-card" id="dealCard-@deal.DealID">
-                                    <div class="card-body p-2">
-                                        <h6 class="card-title mb-1">@deal.DealName</h6>
-                                        <p class="mb-1"><strong>Value:</strong> @(deal.Value?.ToString("C") ?? "-")</p>
-                                        <p class="mb-1"><strong>Status:</strong> @deal.Status</p>
-                                        <p class="mb-1"><strong>Contact:</strong> @deal.ContactName</p>
-
-                                        <div class="d-flex justify-content-end">
-                                            <button class="btn btn-sm btn-primary me-1 btn-edit" data-bs-toggle="modal" data-bs-target="#editDealModal" data-dealid="@deal.DealID">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-danger" onclick="confirmDelete('@deal.DealID')">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            }
-                        }
-                        else
-                        {
-                            <p class="text-muted">No deals</p>
-                        }
-                    </div>
+                    <div class="card-body kanban-column" data-stage="@stage" style="min-height: 300px;"></div>
                 </div>
             </div>
-        }
-    </div>
+    }
 </div>
-
 <!-- Create Deal Modal -->
 <div class="modal fade" id="createDealModal" tabindex="-1" aria-labelledby="createDealModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog">
         <div class="modal-content">
-            <form id="createDealForm" method="post" asp-page-handler="Create">
+            <form id="createDealForm">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="createDealModalLabel">Create New Deal</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <h5 class="modal-title">Create New Deal</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body row g-3">
-                    <div class="col-md-6">
-                        <label asp-for="DealModel.NewDeal.DealName" class="form-label">Deal Name</label>
-                        <input asp-for="DealModel.NewDeal.DealName" class="form-control" id="DealName" />
+                    <div class="col-6">
+                        <label class="form-label">Deal Name</label>
+                        <input class="form-control" id="DealName" />
                     </div>
-                    <div class="col-md-6">
-                        <label asp-for="DealModel.NewDeal.Value" class="form-label">Value</label>
-                        <input asp-for="DealModel.NewDeal.Value" class="form-control" id="Value" type="number" />
+                    <div class="col-6">
+                        <label class="form-label">Value</label>
+                        <input class="form-control" id="Value" type="number" />
                     </div>
-                    <div class="col-md-6">
-                        <label asp-for="DealModel.NewDeal.Stage" class="form-label">Stage</label>
-                        <input asp-for="DealModel.NewDeal.Stage" class="form-control" id="Stage" />
+                    <div class="col-6">
+                        <label class="form-label">Stage</label>
+                        <input class="form-control" id="Stage" />
                     </div>
-                    <div class="col-md-6">
-                        <label asp-for="DealModel.NewDeal.Status" class="form-label">Status</label>
-                        <input asp-for="DealModel.NewDeal.Status" class="form-control" id="Status" />
+                    <div class="col-6">
+                        <label class="form-label">Status</label>
+                        <input class="form-control" id="Status" />
                     </div>
-                    <div class="col-md-6">
-                        <label asp-for="DealModel.NewDeal.ExpectedCloseDate" class="form-label">Expected Close Date</label>
-                        <input asp-for="DealModel.NewDeal.ExpectedCloseDate" class="form-control" id="ExpectedCloseDate" type="date" />
+                    <div class="col-6">
+                        <label class="form-label">Expected Close Date</label>
+                        <input class="form-control" id="ExpectedCloseDate" type="date" />
                     </div>
-                    <div class="col-md-6">
-                        <label asp-for="DealModel.NewDeal.ContactID" class="form-label">Contact Name</label>
-                        <select class="form-select" id="ContactID" name="ContactID">
-                            <option value="">-- Select Contact --</option>
-                        </select>
+                    <div class="col-6">
+                        <label class="form-label">Contact</label>
+                        <select class="form-select" id="ContactID"></select>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -170,40 +101,38 @@
 
 <!-- Edit Deal Modal -->
 <div class="modal fade" id="editDealModal" tabindex="-1" aria-labelledby="editDealModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog">
         <div class="modal-content">
-            <form id="editDealForm" method="post" asp-page-handler="Edit">
+            <form id="editDealForm">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="editDealModalLabel">Edit Deal</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <h5 class="modal-title">Edit Deal</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body row g-3">
-                    <input asp-for="DealModel.DealToEdit.DealID" type="hidden" id="DealID" />
-                    <div class="col-md-6">
-                        <label asp-for="DealModel.DealToEdit.DealName" class="form-label">Deal Name</label>
-                        <input asp-for="DealModel.DealToEdit.DealName" class="form-control" id="EditDealName" />
+                    <input type="hidden" id="DealID" />
+                    <div class="col-6">
+                        <label class="form-label">Deal Name</label>
+                        <input class="form-control" id="EditDealName" />
                     </div>
-                    <div class="col-md-6">
-                        <label asp-for="DealModel.DealToEdit.Value" class="form-label">Value</label>
-                        <input asp-for="DealModel.DealToEdit.Value" class="form-control" id="EditValue" type="number" />
+                    <div class="col-6">
+                        <label class="form-label">Value</label>
+                        <input class="form-control" id="EditValue" type="number" />
                     </div>
-                    <div class="col-md-6">
-                        <label asp-for="DealModel.DealToEdit.Stage" class="form-label">Stage</label>
-                        <input asp-for="DealModel.DealToEdit.Stage" class="form-control" id="EditStage" />
+                    <div class="col-6">
+                        <label class="form-label">Stage</label>
+                        <input class="form-control" id="EditStage" />
                     </div>
-                    <div class="col-md-6">
-                        <label asp-for="DealModel.DealToEdit.Status" class="form-label">Status</label>
-                        <input asp-for="DealModel.DealToEdit.Status" class="form-control" id="EditStatus" />
+                    <div class="col-6">
+                        <label class="form-label">Status</label>
+                        <input class="form-control" id="EditStatus" />
                     </div>
-                    <div class="col-md-6">
-                        <label asp-for="DealModel.DealToEdit.ExpectedCloseDate" class="form-label">Expected Close Date</label>
-                        <input asp-for="DealModel.DealToEdit.ExpectedCloseDate" class="form-control" id="EditExpectedCloseDate" type="date" />
+                    <div class="col-6">
+                        <label class="form-label">Expected Close Date</label>
+                        <input class="form-control" id="EditExpectedCloseDate" type="date" />
                     </div>
-                    <div class="col-md-6">
-                        <label asp-for="DealModel.DealToEdit.ContactID" class="form-label">Contact Name</label>
-                        <select class="form-select" id="EditContactID" name="ContactID">
-                            <option value="">-- Select Contact --</option>
-                        </select>
+                    <div class="col-6">
+                        <label class="form-label">Contact</label>
+                        <select class="form-select" id="EditContactID"></select>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -216,227 +145,291 @@
 </div>
 
 @section Styles {
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" />
-    <style>
-        .deal-card:hover {
-            background-color: #f8f9fa;
-            cursor: grab;
-        }
-    </style>
+        <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" />
+        <style>
+            .deal-card {
+                background-color: white;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                padding: 8px;
+                margin-bottom: 8px;
+                cursor: grab;
+            }
+        </style>
 }
-
 
 @section Scripts {
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+        <script>
+            window.bootstrap = bootstrap; // ✅ Fix: ensure Modal APIs are available globally
+        </script>
 
+        <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+        <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+        <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
-    <script>
-        window.API_BASE_URL = '@Configuration["ApiSettings:BaseUrl"]';
-        let cachedContacts = [];
+        <script>
+            const API_BASE = '@Configuration["ApiSettings:BaseUrl"]';
 
-        async function loadContacts() {
-            console.log("🟡 Calling loadContacts()");
-            try {
-                    const response = await fetch(`${window.API_BASE_URL}/api/Contact/GetContactsByUserId`, {
-                    credentials: "include"
-                });
-
-                const result = await response.json();
-                console.log("✅ Contacts loaded:", result);
-
-                const contacts = result.$values ?? result;
-                cachedContacts = contacts;
-
-                const createSelect = document.getElementById("ContactID");
-                const editSelect = document.getElementById("EditContactID");
-
-                createSelect.innerHTML = '<option value="">-- Select Contact --</option>';
-                editSelect.innerHTML = '<option value="">-- Select Contact --</option>';
-
-                contacts.forEach(c => {
-                    const option1 = new Option(`${c.name}`, c.contactID);
-                    const option2 = new Option(`${c.name}`, c.contactID);
-                    createSelect.add(option1);
-                    editSelect.add(option2);
-                });
-
-                console.log("✅ Contact dropdowns populated");
-                return true;
-            } catch (err) {
-                console.error("❌ Failed to load contacts:", err);
-                return false;
-            }
-        }
-
-
-        $(document).ready(function () {
-            console.log("🟢 Document ready");
-            loadContacts(); // ← Make sure this runs immediately
-            const userRole = sessionStorage.getItem("role");
-            console.log(userRole);
-            // Hide admin-only columns if the user is not an Admin
-            if (userRole !== "Admin") {
-                // Hide admin-only columns
-                $('#dealsTable th:nth-child(7), #dealsTable th:nth-child(8), #dealsTable th:nth-child(9), #dealsTable th:nth-child(10)').hide();
-                $('#dealsTable td:nth-child(7), #dealsTable td:nth-child(8), #dealsTable td:nth-child(9), #dealsTable td:nth-child(10)').hide();
+            async function loadContacts() {
+                try {
+                    const res = await fetch(`${API_BASE}/api/Contact/GetContactsByUserId`, { credentials: 'include' });
+                    const data = await res.json();
+                    const contacts = data.$values ?? data;
+                    const options = contacts.map(c => `<option value="${c.contactID}">${c.name}</option>`).join('');
+                    $("#ContactID, #EditContactID").html(`<option value="">-- Select Contact --</option>` + options);
+                } catch (err) {
+                    console.error("Failed to load contacts", err);
+                }
             }
 
-            // Initialize DataTables
-            $('#dealsTable').DataTable({
-                paging: true,
-                searching: true,
-                lengthChange: true,
-                pageLength: 10,
-                lengthMenu: [5, 10, 25, 50, 100],
-                columnDefs: [{
-                    targets: 0, // First column (index 0)
-                    searchable: false,
-                    orderable: false
-                }],
-                order: [[1, 'asc']], // Order by Deal Name column instead of index
-                drawCallback: function (settings) {
-                    let api = this.api();
-                    api.column(0, { page: 'current' }).nodes().each(function (cell, i) {
-                        cell.innerHTML = i + 1;
+            function formatDate(dateStr) {
+                if (!dateStr) return '';
+                const d = new Date(dateStr);
+                return d.toLocaleString('en-MY', {
+                    year: 'numeric', month: '2-digit', day: '2-digit',
+                    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+                });
+            }
+
+            function loadDeals() {
+                $.ajax({
+                    url: `${API_BASE}/api/Deal/GetDealByUserId`,
+                    method: 'GET',
+                    xhrFields: { withCredentials: true },
+                    success: res => {
+                        const list = res.$values ?? res;
+                        populateTableView(list);
+                        populateKanban(list);
+                    },
+                    error: () => alert("Failed to load deals")
+                });
+            }
+
+            $('#btnCreateDeal').click(() => {
+                const modal = new bootstrap.Modal(document.getElementById('createDealModal'));
+                modal.show();
+            });
+
+                    function populateTableView(deals) {
+                const table = $('#dealsTable');
+
+                if ($.fn.DataTable.isDataTable(table)) {
+                    table.DataTable().clear().destroy();  // 🔁 Clean it
+                }
+
+                const tbody = $('#dealsTableBody').empty();
+
+                deals.forEach((d, i) => {
+                    const row = `<tr>
+                        <td>${i + 1}</td>
+                        <td>${d.dealName}</td>
+                        <td>${d.value?.toLocaleString('en-MY', { style: 'currency', currency: 'MYR' }) ?? '-'}</td>
+                        <td>${d.stage}</td>
+                        <td>${d.status}</td>
+                        <td>${formatDate(d.expectedCloseDate)}</td>
+                        <td class="admin-column">${formatDate(d.createdDate)}</td>
+                        <td class="admin-column">${d.createdByUsername ?? ''}</td>
+                        <td class="admin-column">${formatDate(d.updatedDate)}</td>
+                        <td class="admin-column">${d.updatedByUsername ?? ''}</td>
+                        <td>${d.contactName}</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary btn-edit" data-id="${d.dealID}"><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-sm btn-danger" onclick="confirmDelete('${d.dealID}')"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>`;
+                    tbody.append(row);
+                });
+
+                // ✅ Fix: Add autoWidth: false and redraw
+                const dt = table.DataTable({
+                    destroy: true,
+                    autoWidth: false,
+                    paging: true,
+                    searching: true,
+                    lengthChange: true,
+                    pageLength: 10,
+                    lengthMenu: [5, 10, 25, 50, 100],
+                    columnDefs: [
+                        {
+                            targets: 0, // index
+                            orderable: false,
+                            searchable: false
+                        }
+                    ],
+                    order: [[1, 'asc']],
+                    drawCallback: function (settings) {
+                        const api = this.api();
+                        api.column(0, { page: 'current' }).nodes().each(function (cell, i) {
+                            cell.innerHTML = i + 1;
+                        });
+                    }
+                });
+
+                dt.columns.adjust().draw(); // ✅ Ensures the layout corrects itself
+
+                if (sessionStorage.getItem("role") !== "Admin") {
+                    $(".admin-column").hide();
+                }
+            }
+
+
+
+            function populateKanban(deals) {
+                const stages = ['Proposal', 'Negotiation', 'Closing', 'Retention'];
+                stages.forEach(stage => {
+                    const col = $(`.kanban-column[data-stage='${stage}']`).empty();
+                    deals.filter(d => d.stage === stage).forEach(d => {
+                        const card = $(`<div class="deal-card" data-id="${d.dealID}">
+                            <strong>${d.dealName}</strong>
+                            <p class="mb-1">Value: ${d.value?.toLocaleString('en-MY', { style: 'currency', currency: 'MYR' }) ?? '-'}</p>
+                            <p class="mb-1">${d.contactName}</p>
+                        </div>`);
+                        col.append(card);
                     });
-                }
-            });
 
-           
-            $("#toggleViewBtn").click(function () {
-                const tableView = $("#tableView");
-                const kanbanView = $("#kanbanView");
+                    new Sortable(col[0], {
+                        group: 'deals',
+                        animation: 150,
+                            onEnd: function (evt) {
+                            const dealId = $(evt.item).data('id');
+                            const newStage = $(evt.to).data('stage');
 
-                if (tableView.is(":visible")) {
-                    tableView.hide();
-                    kanbanView.show();
-                    $(this).html('<i class="fas fa-table"></i> Switch to Table View');
-                } else {
-                    kanbanView.hide();
-                    tableView.show();
-                    $(this).html('<i class="fas fa-columns"></i> Switch to Kanban View');
-                }
-            });
+                            // Get full deal object first
+                            $.ajax({
+                                url: `${API_BASE}/api/Deal/GetDealById/${dealId}`,
+                                method: 'GET',
+                                xhrFields: { withCredentials: true },
+                                success: function (deal) {
+                                    const updated = {
+                                        dealID: deal.dealID,
+                                        dealName: deal.dealName,
+                                        value: deal.value,
+                                        stage: newStage, // 🔁 update stage
+                                        status: deal.status,
+                                        expectedCloseDate: deal.expectedCloseDate,
+                                        contactID: deal.contactID,
+                                        updatedBy: sessionStorage.getItem("userId") // ✅ required by backend
+                                    };
 
+                                    $.ajax({
+                                        url: `${API_BASE}/api/Deal/UpdateStage/${dealId}`,
+                                        type: 'PUT',
+                                        contentType: 'application/json',
+                                        data: JSON.stringify(updated),
+                                        xhrFields: { withCredentials: true },
+                                        success: () => loadDeals(),
+                                        error: () => alert("Failed to update stage")
+                                    });
+                                },
+                                error: () => alert("Failed to fetch deal for stage update")
+                            });
+                        }
 
-            // Create Deal
-            $("#createDealForm").submit(function (e) {
-                e.preventDefault();
-
-                const formData = {
-                    DealName: $("#DealName").val(),
-                    Value: $("#Value").val(),
-                    Stage: $("#Stage").val(),
-                    Status: $("#Status").val(),
-                     ExpectedCloseDate: $("#ExpectedCloseDate").val() ? $("#ExpectedCloseDate").val() : null,  // Handle nullable date
-                    ContactID: $("#ContactID").val()
-                };
-
-                $.ajax({
-                    url: `${window.API_BASE_URL}/api/Deal/CreateDeal`,
-                    type: 'POST',
-                    contentType: 'application/json',                 
-                    data: JSON.stringify(formData),
-                    xhrFields: {
-                        withCredentials: true
-                    },
-                    success: function (response) {
-                        location.reload(); // Easier: reload after add
-                    },
-                    error: function () {
-                        alert("Error creating deal.");
-                    }
-                });
-            });
-
-            // Edit Deal
-            $("#editDealForm").submit(function (e) {
-                e.preventDefault();
-
-                const formData = {
-                    DealID: $("#DealID").val(),
-                    DealName: $("#EditDealName").val(),
-                    Value: $("#EditValue").val(),
-                    Stage: $("#EditStage").val(),
-                    Status: $("#EditStatus").val(),
-                    ExpectedCloseDate: $("#EditExpectedCloseDate").val() ? $("#EditExpectedCloseDate").val() : null, // Handle nullable date
-                    ContactID: $("#EditContactID").val()
-                };
-
-                $.ajax({
-                    url: `${window.API_BASE_URL}/api/Deal/UpdateDealById/${formData.DealID}`,
-                    type: 'PUT',
-                    contentType: 'application/json',
-                    xhrFields: {
-                        withCredentials: true  // Ensures cookies are sent
-                    },
-                    data: JSON.stringify(formData),
-                    success: function () {
-                        location.reload();
-                    },
-                    error: function () {
-                        alert("Error updating deal.");
-                    }
-                });
-            });
-
-        // Populate Edit Modal
-        $(document).on("click", ".btn-edit", async function () {
-            const dealId = $(this).data("dealid");
-
-            try {
-                console.log("🟢 Edit clicked: dealId =", dealId);
-
-                    const dealResponse = await fetch(`${window.API_BASE_URL}/api/Deal/GetDealById/${dealId}`, {
-                    credentials: "include"
-                });
-                const deal = await dealResponse.json();
-                console.log("✅ Deal loaded:", deal);
-
-                if (cachedContacts.length === 0) {
-                    const loaded = await loadContacts();
-                    if (!loaded) {
-                        alert("Could not load contacts.");
-                        return;
-                    }
-                }
-
-                $("#DealID").val(deal.dealID);
-                $("#EditDealName").val(deal.dealName);
-                $("#EditValue").val(deal.value);
-                $("#EditStage").val(deal.stage);
-                $("#EditStatus").val(deal.status);
-                $("#EditExpectedCloseDate").val(deal.expectedCloseDate?.split("T")[0] || "");
-                $("#EditContactID").val(deal.contactID); // ✅ Corrected casing
-                console.log("✅ Setting contactID to:", deal.contactID);
-
-            } catch (err) {
-                console.error("Failed to load deal or contacts:", err);
-                alert("Error loading deal info.");
-            }
-        });
-    });
-
-        function confirmDelete(dealId) {
-            if (confirm("Are you sure you want to delete this deal?")) {
-                $.ajax({
-                    url: `${window.API_BASE_URL}/api/Deal/DeleteDealById/${dealId}`,
-                    type: "DELETE",
-                    xhrFields: {
-                        withCredentials: true  // Ensures cookies are sent
-                    },
-                    success: function () {
-                        location.reload();
-                    },
-                    error: function () {
-                        alert("Error deleting deal.");
-                    }
+                    });
                 });
             }
-        }
-    </script>
+
+            function confirmDelete(dealId) {
+                if (!confirm("Delete this deal?")) return;
+                $.ajax({
+                    url: `${API_BASE}/api/Deal/DeleteDealById/${dealId}`,
+                    type: 'DELETE',
+                    xhrFields: { withCredentials: true },
+                    success: () => loadDeals(),
+                    error: () => alert("Failed to delete deal.")
+                });
+            }
+
+            $(function () {
+                loadContacts();
+                loadDeals();
+
+                $('#toggleViewBtn').click(() => {
+                    $('#tableView').toggle();
+                    $('#kanbanView').toggle();
+                    $('#toggleViewBtn i').toggleClass('fa-columns fa-table');
+                    $('#toggleViewBtn').text($('#kanbanView').is(':visible') ? ' Switch to Table View' : ' Switch to Kanban View').prepend($('#toggleViewBtn i'));
+                });
+
+                $('#createDealForm').submit(function (e) {
+                    e.preventDefault();
+                    const formData = {
+                        DealName: $('#DealName').val(),
+                        Value: parseFloat($('#Value').val()),
+                        Stage: $('#Stage').val(),
+                        Status: $('#Status').val(),
+                        ExpectedCloseDate: $('#ExpectedCloseDate').val() || null,
+                        ContactID: $('#ContactID').val()
+                    };
+                    $.ajax({
+                        url: `${API_BASE}/api/Deal/CreateDeal`,
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify(formData),
+                        xhrFields: { withCredentials: true },
+                        success: () => {
+                            const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('createDealModal'));
+                            modal.hide();
+                            loadDeals();
+                        },
+                        error: () => alert("Create failed")
+                    });
+                });
+
+                $('#editDealForm').submit(function (e) {
+                    e.preventDefault();
+                    const formData = {
+                        DealID: $('#DealID').val(),
+                        DealName: $('#EditDealName').val(),
+                        Value: parseFloat($('#EditValue').val()),
+                        Stage: $('#EditStage').val(),
+                        Status: $('#EditStatus').val(),
+                        ExpectedCloseDate: $('#EditExpectedCloseDate').val() || null,
+                        ContactID: $('#EditContactID').val(),
+                        UpdatedBy: sessionStorage.getItem("userId")
+                    };
+                    $.ajax({
+                        url: `${API_BASE}/api/Deal/UpdateDealById/${formData.DealID}`,
+                        type: 'PUT',
+                        contentType: 'application/json',
+                        data: JSON.stringify(formData),
+                        xhrFields: { withCredentials: true },
+                        success: () => {
+                            const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('editDealModal'));
+                            modal.hide();
+                            loadDeals();
+                        },
+                        error: () => alert("Edit failed")
+                    });
+                });
+
+                $(document).on('click', '.btn-edit', function () {
+                    const id = $(this).data('id');
+                    $.ajax({
+                        url: `${API_BASE}/api/Deal/GetDealById/${id}`,
+                        method: 'GET',
+                        xhrFields: { withCredentials: true },
+                        success: async function (deal) {
+                            await loadContacts();
+                            $('#DealID').val(deal.dealID);
+                            $('#EditDealName').val(deal.dealName);
+                            $('#EditValue').val(deal.value);
+                            $('#EditStage').val(deal.stage);
+                            $('#EditStatus').val(deal.status);
+                            $('#EditExpectedCloseDate').val(deal.expectedCloseDate?.split('T')[0] || '');
+                            $('#EditContactID').val(deal.contactID);
+
+                            // ✅ Show the modal manually
+                            const modal = new bootstrap.Modal(document.getElementById('editDealModal'));
+                            modal.show();
+                        },
+                        error: () => alert("Failed to load deal")
+                    });
+                });
+
+            });
+        </script>
 }
+

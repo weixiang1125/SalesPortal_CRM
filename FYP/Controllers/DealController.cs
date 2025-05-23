@@ -100,4 +100,14 @@ public class DealController : BaseController
 
         return NoContent();
     }
+    [Authorize]
+    [HttpPut("UpdateStage/{id}")]
+    public async Task<IActionResult> UpdateStage(int id, [FromBody] UpdateStageDto dto)
+    {
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        var success = await _dealService.UpdateDealStageAsync(id, dto.Stage, userId);
+        return success ? Ok() : NotFound();
+    }
+
+
 }

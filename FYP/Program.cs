@@ -112,10 +112,11 @@ app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-// Enable Authentication middleware
-app.UseAuthentication(); // Add this line to enable JWT Authentication
+
 app.UseCors("AllowFrontend");
+app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapHub<ChatHub>("/chathub");
 app.MapControllers();
 

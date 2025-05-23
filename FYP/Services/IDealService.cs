@@ -11,5 +11,7 @@ namespace CRM_API.Services
         Task<Deal> CreateDealAsync(Deal deal, int userId);
         Task<bool> UpdateDealAsync(Deal deal, int userId);
         Task<bool> DeleteDealByIdAsync(int id);
+        Task<bool> UpdateDealStageAsync(int dealId, string newStage, int updatedBy);
+
     }
 }

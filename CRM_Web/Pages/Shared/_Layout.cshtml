@@ -144,6 +144,8 @@
 
 
     <script>
+            window.API_BASE_URL = '@Configuration["ApiSettings:BaseUrl"]';
+
            // Toggle Sidebar
             function toggleSidebar() {
                 document.getElementById('sidebar').classList.toggle('hidden');
@@ -157,7 +159,7 @@
                 btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging out...';
                 sessionStorage.clear();
                 localStorage.clear();
-                fetch('https://localhost:44309/api/Auth/logout', {
+                 fetch('@Configuration["ApiSettings:BaseUrl"]/api/Auth/logout', {
                     method: 'POST',
                     credentials: 'include'
                 }).finally(() => {

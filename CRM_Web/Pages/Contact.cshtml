@@ -14,57 +14,28 @@
     </button>
 </div>
 
-@if (Model.ContactModel.Contacts != null && Model.ContactModel.Contacts.Any())
-{
-    <table id="contactsTable" class="table table-bordered table-striped">
-        <thead class="table-dark">
-            <tr>
-                <th>#</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Phone</th>
-                <th>Company</th>
-                <th>Status</th>
-                <th>Notes</th>
-                <th class="admin-column">Created Date</th>
-                <th class="admin-column">Created By</th>
-                <th class="admin-column">Updated Date</th>               
-                <th class="admin-column">Updated By</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var contact in Model.ContactModel.Contacts)
-            {
-                <tr id="contactRow-@contact.ContactID">
-                    <td></td>
-                    <td>@contact.Name</td>
-                    <td>@contact.Email</td>
-                    <td>@contact.Phone</td>
-                    <td>@contact.Company</td>
-                    <td>@contact.Status</td>
-                    <td>@contact.Notes</td>
-                    <td class="admin-column">@contact.CreatedDate?.ToString("g")</td>
-                    <td class="admin-column">@contact.CreatedByUsername</td>
-                    <td class="admin-column">@contact.UpdatedDate?.ToString("g")</td>
-                    <td class="admin-column">@contact.UpdatedByUsername</td>
-                    <td>
-                        <button class="btn btn-sm btn-primary me-1 btn-edit" data-bs-toggle="modal" data-bs-target="#editContactModal" data-contactid="@contact.ContactID">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn btn-sm btn-danger" onclick="confirmDelete('@contact.ContactID')">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
-else
-{
-    <div class="alert alert-info">No contacts available.</div>
-}
+<table id="contactsTable" class="table table-bordered table-striped">
+    <thead class="table-dark">
+        <tr>
+            <th>#</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Company</th>
+            <th>Status</th>
+            <th>Notes</th>
+            <th class="admin-column">Created Date</th>
+            <th class="admin-column">Created By</th>
+            <th class="admin-column">Updated Date</th>
+            <th class="admin-column">Updated By</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody id="contactsTableBody">
+        <!-- JavaScript will populate rows here -->
+    </tbody>
+</table>
+
 
 <!-- Create Contact Modal -->
 <div class="modal fade" id="createContactModal" tabindex="-1" aria-labelledby="createContactModalLabel" aria-hidden="true">
@@ -184,36 +155,101 @@ else
             }
         }
 
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            const localDate = new Date(dateString);
+            return localDate.toLocaleString('en-MY', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            });
+}
+
         $(document).ready(function () {
             // Choose one method to determine admin status
             const isAdmin = sessionStorage.getItem('role') === 'Admin';
 
+               function loadContacts() {
+                    $.ajax({
+                        url: `${window.API_BASE_URL}/api/Contact/GetContactsByUserId`,
+                        method: 'GET',
+                        xhrFields: { withCredentials: true },
+                        success: function (contacts) {
+                            const tbody = $("#contactsTableBody");
+                            tbody.empty();
 
-            // Hide admin-only columns BEFORE initializing DataTable
-            if (!isAdmin) {
-                $('.admin-column').hide();
-            }
+                            const list = contacts.$values ?? contacts;
+                            list.forEach((contact, index) => {
+                                const row = `
+                                    <tr id="contactRow-${contact.contactID}">
+                                        <td>${index + 1}</td>
+                                        <td>${contact.name}</td>
+                                        <td>${contact.email}</td>
+                                        <td>${contact.phone}</td>
+                                        <td>${contact.company}</td>
+                                        <td>${contact.status}</td>
+                                        <td>${contact.notes}</td>
+                                        <td class="admin-column">${formatDate(contact.createdDate)}</td>
+                                        <td class="admin-column">${contact.createdByUsername ?? ''}</td>
+                                        <td class="admin-column">${formatDate(contact.updatedDate)}</td>
+                                        <td class="admin-column">${contact.updatedByUsername ?? ''}</td>
 
-            // Initialize DataTables
-            $('#contactsTable').DataTable({
-                paging: true,
-                searching: true,
-                lengthChange: true,
-                pageLength: 10,
-                lengthMenu: [5, 10, 25, 50, 100],
-                columnDefs: [{
-                    targets: 0, // First column (index 0)
-                    searchable: false,
-                    orderable: false
-                }],
-                order: [[1, 'asc']], // Order by Name column instead of index
-                drawCallback: function (settings) {
-                    let api = this.api();
-                    api.column(0, { page: 'current' }).nodes().each(function (cell, i) {
-                        cell.innerHTML = i + 1;
+                                        <td>
+                                            <button class="btn btn-sm btn-primary me-1 btn-edit" data-bs-toggle="modal" data-bs-target="#editContactModal" data-contactid="${contact.contactID}">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" onclick="confirmDelete('${contact.contactID}')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>`;
+                                tbody.append(row);
+                            });
+
+                            // Destroy old instance if exists
+                            if ($.fn.DataTable.isDataTable('#contactsTable')) {
+                                $('#contactsTable').DataTable().destroy();
+                            }
+
+                            // Re-initialize after data is fully loaded
+                            $('#contactsTable').DataTable({
+                                paging: true,
+                                searching: true,
+                                lengthChange: true,
+                                pageLength: 10,
+                                lengthMenu: [5, 10, 25, 50, 100],
+                                columnDefs: [{
+                                    targets: 0,
+                                    searchable: false,
+                                    orderable: false
+                                }],
+                                order: [[1, 'asc']],
+                                drawCallback: function (settings) {
+                                    let api = this.api();
+                                    api.column(0, { page: 'current' }).nodes().each(function (cell, i) {
+                                        cell.innerHTML = i + 1;
+                                    });
+                                }
+                            });
+
+                            // Optional: hide admin columns if needed
+                            const isAdmin = sessionStorage.getItem('role') === 'Admin';
+                            if (!isAdmin) $('.admin-column').hide();
+                        },
+                        error: function () {
+                            alert("Failed to load contacts.");
+                        }
                     });
                 }
-            });
+
+
+
+
+                loadContacts();
 
             // Create Contact
             $("#createContactForm").submit(function (e) {
@@ -274,7 +310,7 @@ else
             });
 
             // Populate Edit Modal
-            $(".btn-edit").click(function () {
+                $(document).on("click", ".btn-edit", function () {
                 const contactId = $(this).data("contactid");
 
                 $.ajax({
