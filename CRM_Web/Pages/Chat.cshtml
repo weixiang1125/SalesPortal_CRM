@@ -161,6 +161,52 @@
                 </div>
             </div>
 
+        <div class="modal fade" id="createDealModal" tabindex="-1" aria-labelledby="createDealModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <form class="modal-content" id="dealForm">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="createDealModalLabel">Create Deal</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="dealContactPhone" name="contactPhone" />
+                        <div class="mb-3">
+                            <label for="dealName" class="form-label">Deal Name</label>
+                            <input type="text" class="form-control" id="dealName" name="dealName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="dealValue" class="form-label">Value</label>
+                            <input type="number" class="form-control" id="dealValue" name="dealValue" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="dealStage" class="form-label">Stage</label>
+                            <select class="form-select" id="dealStage" name="dealStage" required>
+                                <option value="Prospecting">Prospecting</option>
+                                <option value="Negotiation">Negotiation</option>
+                                <option value="Closed-Won">Closed-Won</option>
+                                <option value="Closed-Lost">Closed-Lost</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="dealStatus" class="form-label">Status</label>
+                            <select class="form-select" id="dealStatus" name="dealStatus" required>
+                                <option value="In Progress">In Progress</option>
+                                <option value="Won">Won</option>
+                                <option value="Lost">Lost</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="expectedCloseDate" class="form-label">Expected Close Date</label>
+                            <input type="date" class="form-control" id="expectedCloseDate" name="expectedCloseDate" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-success">Create Deal</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
             <ul class="list-group sidebar-list">
 
                 @{
@@ -237,8 +283,9 @@
                 <div class="mb-3"><strong>Name:</strong> <div><!-- Add name if needed --></div></div>
                 <div class="d-grid gap-2">
                     <button class="btn btn-outline-secondary">📝 Add Note</button>
-                    <button class="btn btn-outline-success">💼 Create Deal</button>
+                    <button class="btn btn-outline-success" onclick="openCreateDealModal()">💼 Create Deal</button>
                 </div>
+
             }
             else
             {
@@ -513,6 +560,44 @@
                 }
 
 
+                 function openCreateDealModal() {
+                    document.getElementById('dealContactPhone').value = selectedPhone;
+                    document.getElementById('dealForm').reset(); // Clear previous entries
+                    const modal = new bootstrap.Modal(document.getElementById('createDealModal'));
+                    modal.show();
+                }
+
+                document.getElementById("dealForm").addEventListener("submit", async function (e) {
+                    e.preventDefault();
+
+                    const dto = {
+                        dealName: document.getElementById("dealName").value,
+                        value: parseFloat(document.getElementById("dealValue").value),
+                        stage: document.getElementById("dealStage").value,
+                        status: document.getElementById("dealStatus").value,
+                        expectedCloseDate: document.getElementById("expectedCloseDate").value,
+                        contactPhone: document.getElementById("dealContactPhone").value
+                    };
+
+                    try {
+                        const res = await fetch(`${window.API_BASE_URL}/api/Deal/CreateDealFromChat`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            credentials: "include",
+                            body: JSON.stringify(dto)
+                        });
+
+                        if (res.ok) {
+                            bootstrap.Modal.getInstance(document.getElementById('createDealModal')).hide();
+                            alert("Deal created successfully.");
+                        } else {
+                            alert("Failed to create deal.");
+                        }
+                    } catch (err) {
+                        console.error("Error creating deal:", err);
+                        alert("Something went wrong.");
+                    }
+                });
 
 
             async function refreshSidebar() {

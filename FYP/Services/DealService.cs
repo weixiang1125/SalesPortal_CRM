@@ -51,7 +51,6 @@ namespace CRM_API.Services
             await _dbContext.SaveChangesAsync();
             return deal;
         }
-
         public async Task<bool> UpdateDealAsync(Deal deal, int userId)
         {
             // Check if the deal exists in the database before attempting to update

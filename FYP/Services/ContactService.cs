@@ -38,6 +38,11 @@ namespace CRM_API.Services
                 .ToListAsync();
         }
 
+        public async Task<Contact?> GetContactByPhoneAsync(string phone)
+        {
+            return await _dbContext.DBContacts
+                .FirstOrDefaultAsync(c => c.Phone == phone);
+        }
 
         public async Task<Contact> CreateContactAsync(Contact contact, int userId)
         {

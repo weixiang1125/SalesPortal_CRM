@@ -14,13 +14,15 @@ public class DealController : BaseController
 {
     private readonly IDealService _dealService;
     private readonly IUsersService _usersService;
+    private readonly IContactService _contactsService;
     private readonly IMapper _mapper;
 
-    public DealController(IDealService dealService, IUsersService usersService, ILogger<BaseController> logger, IMapper mapper)
+    public DealController(IDealService dealService, IUsersService usersService, IContactService contactsService, ILogger<BaseController> logger, IMapper mapper)
         : base(logger)  // Pass the logger to the BaseController constructor
     {
         _dealService = dealService;
         _usersService = usersService;
+        _contactsService = contactsService;
         _mapper = mapper;
     }
 
@@ -68,6 +70,34 @@ public class DealController : BaseController
         var created = await _dealService.CreateDealAsync(deal, userId);
         return CreatedAtAction(nameof(GetDealById), new { id = created.DealID }, created);
     }
+
+    [Authorize]
+    [HttpPost("CreateDealFromChat")]
+    public async Task<IActionResult> CreateDealFromChat([FromBody] CreateDealFromChatDto dto)
+    {
+        var contact = await _contactsService.GetContactByPhoneAsync(dto.ContactPhone);
+
+        if (contact == null)
+            return BadRequest("Contact not found.");
+
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+        var deal = new Deal
+        {
+            DealName = dto.DealName,
+            Value = dto.Value,
+            Stage = dto.Stage,
+            Status = dto.Status,
+            ExpectedCloseDate = dto.ExpectedCloseDate,
+            ContactID = contact.ContactID,
+            CreatedBy = userId,
+            CreatedDate = TimeHelper.Now()
+        };
+
+        var created = await _dealService.CreateDealAsync(deal, userId);
+        return CreatedAtAction(nameof(GetDealById), new { id = created.DealID }, created);
+    }
+
 
     [Authorize]
     [HttpPut("UpdateDealById/{id}")]
