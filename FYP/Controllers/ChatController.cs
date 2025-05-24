@@ -1,5 +1,6 @@
 ﻿using CRM_API.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
@@ -7,14 +8,16 @@ namespace CRM_API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [EnableCors("AllowFrontend")]
     [Authorize]
     public class ChatController : ControllerBase
     {
         private readonly IChatService _chatService;
-
-        public ChatController(IChatService chatService)
+        private readonly IWebHostEnvironment _env;
+        public ChatController(IChatService chatService, IWebHostEnvironment env)
         {
             _chatService = chatService;
+            _env = env;
         }
 
         [HttpGet("{contactId}")]
@@ -38,6 +41,8 @@ namespace CRM_API.Controllers
             var result = await _chatService.SendMessageAsync(dto, userId.Value);
             return result ? Ok() : BadRequest();
         }
+
+
 
         [HttpPost("webhook")]
         [AllowAnonymous] // optional: if webhook is public
@@ -65,8 +70,11 @@ namespace CRM_API.Controllers
             else if (mime.StartsWith("audio/")) type = "audio";
             else if (ext == ".pdf" || ext == ".docx" || ext == ".xlsx") type = "document";
 
+            string blobUrl;
+
             var uniqueFileName = Guid.NewGuid().ToString() + ext;
-            var blobUrl = await blobService.UploadFileAsync(file.OpenReadStream(), uniqueFileName, mime);
+            blobUrl = await blobService.UploadFileAsync(file.OpenReadStream(), uniqueFileName, mime);
+
 
             var dto = new SendMessageDTO
             {
@@ -78,6 +86,7 @@ namespace CRM_API.Controllers
             await _chatService.SendMessageAsync(dto, GetUserId().Value);
             return Ok(new { url = blobUrl, type });
         }
+
 
 
 

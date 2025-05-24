@@ -99,7 +99,7 @@ public class WhatsAppService
                 messaging_product = "whatsapp",
                 to = toPhoneNumber,
                 type = "audio",
-                audio = new { link = message.MessageText }
+                audio = new { link = message.MessageText, voice = true }
             },
             "document" => new
             {

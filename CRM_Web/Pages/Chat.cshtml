@@ -262,6 +262,10 @@
                                   rows="1"
                                   placeholder="Type a message..."
                                   style="resize: none; max-height: 150px; overflow-y: auto;"></textarea>
+                        <label class="btn btn-outline-secondary me-2 mb-0" id="recordButton">
+                            🎤
+                        </label>
+
                         <button id="sendButton" class="btn btn-primary">Send</button>
                     </div>
 
@@ -296,13 +300,79 @@
 
     @section Scripts {
         <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
-            
+        <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.0/lame.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/opus-recorder@7.0.0/dist/recorder.min.js"></script>
+
+
         <script>
+        let selectedPhone = decodeURIComponent("@Model.SelectedPhone".replace(/&#x2B;|&#43;/g, "%2B"));
+        let opusRecorder;
+        let isRecording = false;
+
+        document.getElementById("recordButton").addEventListener("click", async () => {
+            if (!isRecording) {
+                // Start recording
+                opusRecorder = new Recorder({
+                    encoderPath: "https://cdn.jsdelivr.net/npm/opus-recorder@7.0.0/dist/encoderWorker.min.js",
+                    mimeType: "audio/ogg; codecs=opus",
+                    numberOfChannels: 1, // Mono as required by WhatsApp
+                    encoderSampleRate: 48000, // WhatsApp compatible
+                });
+
+                    opusRecorder.ondataavailable = async (buffer) => {
+                    // Convert buffer to Blob explicitly
+                    const blob = new Blob([buffer], { type: "audio/ogg; codecs=opus" });
+
+                    const formData = new FormData();
+                    formData.append("file", blob, "voice.ogg");
+                    formData.append("contactPhone", selectedPhone);
+
+                    try {
+                        const res = await fetch(`${window.API_BASE_URL}/api/chat/upload`, {
+                            method: "POST",
+                            body: formData,
+                            credentials: "include"
+                        });
+
+                        if (res.ok) {
+                            const result = await res.json();
+                            console.log("✅ OPUS uploaded", result);
+                            refreshSidebar();
+                            scrollToBottom();
+                        } else {
+                            alert("Upload failed.");
+                        }
+                    } catch (err) {
+                        console.error("Upload error", err);
+                        alert("Upload failed.");
+                    }
+                };
+
+
+                opusRecorder.start().then(() => {
+                    isRecording = true;
+                    recordButton.innerText = "⏹️";
+                }).catch((e) => {
+                    console.error("Mic access denied", e);
+                    alert("Please allow microphone access.");
+                });
+
+            } else {
+                // Stop and upload
+                await opusRecorder.stop();
+                isRecording = false;
+                recordButton.innerText = "🎤";
+            }
+        });
+
+
+
+
             window.API_BASE_URL = '@Configuration["ApiSettings:BaseUrl"]';
             const shownMessageIds = new Set();
             let lastMessageDate = null;
             const allRecentPhones = @Html.Raw(Json.Serialize(Model.RecentPhones));
-            let selectedPhone = decodeURIComponent("@Model.SelectedPhone".replace(/&#x2B;|&#43;/g, "%2B"));
+            
             const chatInput = document.getElementById("chatInput");
             const sendButton = document.getElementById("sendButton");
             const messageContainer = document.getElementById("chatMessages");
