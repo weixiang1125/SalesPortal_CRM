@@ -43,7 +43,7 @@
 </div>
 
 <div id="kanbanView" class="row g-4" style="display: none;">
-    @foreach (var stage in new[] { "Proposal", "Negotiation", "Closing", "Retention" })
+    @foreach (var stage in new[] { "Prospecting", "Negotiation", "Closed-Won", "Closed-Lost" })
     {
             <div class="col-md-3">
                 <div class="card border-dark shadow-sm h-100">
@@ -75,11 +75,19 @@
                     </div>
                     <div class="col-6">
                         <label class="form-label">Stage</label>
-                        <input class="form-control" id="Stage" />
+                        <select class="form-select" id="Stage" required>
+                            <option value="Prospecting">Prospecting</option>
+                            <option value="Negotiation">Negotiation</option>
+                            <option value="Closed-Won">Closed-Won</option>
+                            <option value="Closed-Lost">Closed-Lost</option>
+                        </select>
                     </div>
                     <div class="col-6">
                         <label class="form-label">Status</label>
-                        <input class="form-control" id="Status" />
+                        <select class="form-select" id="Status" required>
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                        </select>
                     </div>
                     <div class="col-6">
                         <label class="form-label">Expected Close Date</label>
@@ -120,11 +128,19 @@
                     </div>
                     <div class="col-6">
                         <label class="form-label">Stage</label>
-                        <input class="form-control" id="EditStage" />
+                        <select class="form-select" id="EditStage" required>
+                            <option value="Prospecting">Prospecting</option>
+                            <option value="Negotiation">Negotiation</option>
+                            <option value="Closed-Won">Closed-Won</option>
+                            <option value="Closed-Lost">Closed-Lost</option>
+                        </select>
                     </div>
                     <div class="col-6">
                         <label class="form-label">Status</label>
-                        <input class="form-control" id="EditStatus" />
+                        <select class="form-select" id="EditStatus" required>
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                        </select>
                     </div>
                     <div class="col-6">
                         <label class="form-label">Expected Close Date</label>
@@ -277,7 +293,7 @@
 
 
             function populateKanban(deals) {
-                const stages = ['Proposal', 'Negotiation', 'Closing', 'Retention'];
+                const stages = ['Prospecting', 'Negotiation', 'Closed-Won', 'Closed-Lost'];
                 stages.forEach(stage => {
                     const col = $(`.kanban-column[data-stage='${stage}']`).empty();
                     deals.filter(d => d.stage === stage).forEach(d => {
