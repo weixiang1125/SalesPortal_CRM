@@ -45,7 +45,11 @@ namespace CRM_Web.Pages.Chat
                 .ToListAsync();
 
             // Load all contacts for modal
-            AllContacts = await _context.DBContacts.OrderBy(c => c.Name).ToListAsync();
+            AllContacts = await _context.DBContacts
+                .Where(c => c.CreatedBy == userId && c.Status == "Active")
+                .OrderBy(c => c.Name)
+                .ToListAsync();
+
 
             // Normalize selected phone
             var raw = WebUtility.HtmlDecode(phone ?? RecentPhones.FirstOrDefault() ?? string.Empty)
