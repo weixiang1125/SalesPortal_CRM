@@ -173,7 +173,13 @@
                 second: '2-digit',
                 hour12: false
             });
-}
+        }
+
+        function goToChat(phone) {
+            if (!phone) return;
+            const normalized = phone.startsWith("+") ? phone : "+" + phone;
+            window.location.href = `/Chat?phone=${encodeURIComponent(normalized)}`;
+        }
 
         $(document).ready(function () {
             // Choose one method to determine admin status
@@ -205,9 +211,12 @@
                                         <td class="admin-column">${contact.updatedByUsername ?? ''}</td>
 
                                         <td>
+                                            <button class="btn btn-sm btn-success me-1" onclick="goToChat('${contact.phone}')">
+                                                <i class="fas fa-comments"></i>
+                                            </button>
                                             <button class="btn btn-sm btn-primary me-1 btn-edit" data-bs-toggle="modal" data-bs-target="#editContactModal" data-contactid="${contact.contactID}">
                                                 <i class="fas fa-edit"></i>
-                                            </button>
+                                            </button>                                        
                                             <button class="btn btn-sm btn-danger" onclick="confirmDelete('${contact.contactID}')">
                                                 <i class="fas fa-trash"></i>
                                             </button>
