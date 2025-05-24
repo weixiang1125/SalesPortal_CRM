@@ -544,6 +544,8 @@
                         link.href = getFullUrl(messageText);
                         link.textContent = "📄 Download Document";
                         link.target = "_blank";
+                        link.style.color = isSender ? "white" : "black"; // Ensure contrast
+                        link.style.textDecoration = "underline";
                         bubble.appendChild(link);
                     } else {
                         bubble.innerHTML = messageText.replace(/\n/g, "<br>");

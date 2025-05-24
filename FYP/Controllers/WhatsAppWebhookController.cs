@@ -110,11 +110,27 @@ namespace CRM_API.Controllers
                     Console.WriteLine("📦 Incoming image ID: " + msg.Image?.Id);
                     messageText = await _chatService.DownloadMediaAndSaveAsync(msg.Image.Id, "image");
                 }
+                else if (msg.Type == "video" && msg.Video?.Id != null)
+                {
+                    Console.WriteLine("📦 Incoming video ID: " + msg.Video?.Id);
+                    messageText = await _chatService.DownloadMediaAndSaveAsync(msg.Video.Id, "video");
+                }
+                else if (msg.Type == "audio" && msg.Audio?.Id != null)
+                {
+                    Console.WriteLine("📦 Incoming audio ID: " + msg.Audio?.Id);
+                    messageText = await _chatService.DownloadMediaAndSaveAsync(msg.Audio.Id, "audio");
+                }
+                else if (msg.Type == "document" && msg.Document?.Id != null)
+                {
+                    Console.WriteLine("📦 Incoming document ID: " + msg.Document?.Id);
+                    messageText = await _chatService.DownloadMediaAndSaveAsync(msg.Document.Id, "document");
+                }
                 else
                 {
                     Console.WriteLine($"❌ Unsupported message type: {msg.Type}");
                     return Ok();
                 }
+
 
                 Console.WriteLine($"📥 From {from} ({name}): {messageText}");
 
