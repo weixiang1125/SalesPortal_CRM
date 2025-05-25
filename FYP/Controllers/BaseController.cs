@@ -6,7 +6,7 @@ namespace CRM_API.Controllers
     [ApiController]
     public abstract class BaseController : ControllerBase
     {
-        private readonly ILogger<BaseController> _logger;
+        protected readonly ILogger<BaseController> _logger;
 
         // Inject logger
         public BaseController(ILogger<BaseController> logger)

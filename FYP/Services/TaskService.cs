@@ -19,10 +19,11 @@ namespace CRM_API.Services
             return await _context.DBTask
                 .Include(t => t.Deal)
                 .Include(t => t.Contact)
-                .Where(t => isAdmin || t.CreatedBy == userId)
+                .Where(t => t.CreatedBy == userId)
                 .OrderByDescending(t => t.DueDate)
                 .ToListAsync();
         }
+
         public async Task<List<Task>> GetAllTasksFromDbAsync()
         {
             return await _context.DBTask

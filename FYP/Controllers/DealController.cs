@@ -16,14 +16,21 @@ public class DealController : BaseController
     private readonly IUsersService _usersService;
     private readonly IContactService _contactsService;
     private readonly IMapper _mapper;
+    private readonly ILogger<DealController> _logger;
 
-    public DealController(IDealService dealService, IUsersService usersService, IContactService contactsService, ILogger<BaseController> logger, IMapper mapper)
-        : base(logger)  // Pass the logger to the BaseController constructor
+    public DealController(
+    IDealService dealService,
+    IUsersService usersService,
+    IContactService contactsService,
+    ILogger<DealController> logger, // NOT BaseController!
+    IMapper mapper
+) : base(logger)
     {
         _dealService = dealService;
         _usersService = usersService;
         _contactsService = contactsService;
         _mapper = mapper;
+        _logger = logger;
     }
 
     [Authorize]
@@ -97,6 +104,41 @@ public class DealController : BaseController
         var created = await _dealService.CreateDealAsync(deal, userId);
         return CreatedAtAction(nameof(GetDealById), new { id = created.DealID }, created);
     }
+
+    [Authorize]
+    [HttpGet("GetDealsGroupedByUser")]
+    public async Task<ActionResult> GetDealsGroupedByUser()
+    {
+        var deals = await _dealService.GetAllDealAsync();
+        _logger.LogWarning("Total Deals: {Count}", deals.Count());
+        foreach (var deal in deals)
+        {
+            _logger.LogWarning("DealID={0} CreatedBy={1} User={2}", deal.DealID, deal.CreatedBy, deal.CreatedByUser?.Username ?? "NULL");
+        }
+        var grouped = deals
+            .Where(d => d.CreatedByUser != null) // ensure no null
+            .Where(d => d.CreatedByUser != null && d.CreatedByUser.Role != "Admin") // 👈 Exclude admin
+            .GroupBy(d => d.CreatedByUser!.Username)
+            .Select(group =>
+            {
+                var wonDeals = group.Where(d => d.Stage == "Closed-Won").ToList();
+                var lostDeals = group.Where(d => d.Stage == "Closed-Lost").ToList();
+
+                return new SalesPerformanceDto
+                {
+                    UserId = group.First().CreatedBy,
+                    Username = group.Key,
+                    TotalSales = wonDeals.Sum(d => d.Value ?? 0),
+                    DealCount = group.Count(),
+                    WonCount = wonDeals.Count,
+                    LostCount = lostDeals.Count,
+                    SuccessRate = group.Any() ? (double)wonDeals.Count * 100 / group.Count() : 0
+                };
+            });
+
+        return Ok(grouped);
+    }
+
 
 
     [Authorize]

@@ -17,34 +17,75 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
     }
+    @if (ViewData["Role"]?.ToString() == "Admin")
+    {
+        <h5 class="mb-2">📊 Company Sales Summary</h5>
+    }
+    
 
     <!-- Cards -->
-    <div class="row g-4 mb-4">
-        <div class="col-md-4">
-            <div class="card shadow">
-                <div class="card-body">
-                    <p class="text-muted">Total Sales (Annual)</p>
-                    <h3 class="text-success">RM 1,200,000.00</h3>
+    @if (ViewData["Role"]?.ToString() == "Admin" || ViewData["Role"]?.ToString() == "User")
+    {
+        <div class="row g-3 mb-4">
+            <div class="col-md-4"><div class="card card-body text-center"><h6>🎯 Target Sales</h6><h3>@ViewData["TargetSales"]</h3></div></div>
+            <div class="col-md-4"><div class="card card-body text-center"><h6>💰 Total Sales</h6><h3>@ViewData["TotalSales"]</h3></div></div>
+            <div class="col-md-4"><div class="card card-body text-center"><h6>📊 Deal Count</h6><h3>@ViewData["DealCount"]</h3></div></div>
+            <div class="col-md-4"><div class="card card-body text-center"><h6>🏆 Deal Won</h6><h3>@ViewData["DealWon"]</h3></div></div>
+            <div class="col-md-4"><div class="card card-body text-center"><h6>❌ Deal Lost</h6><h3>@ViewData["DealLost"]</h3></div></div>
+            <div class="col-md-4"><div class="card card-body text-center"><h6>📈 Success Rate</h6><h3>@ViewData["SuccessRate"]</h3></div></div>
+        </div>
+    }
+
+    @if (ViewData["Role"]?.ToString() == "User")
+    {
+        <div class="mb-4">
+            <h6>📊 Sales Progress</h6>
+            <div class="progress">
+                <div class="progress-bar bg-success" role="progressbar" style="width: @ViewData["ProgressPercent"]%" aria-valuenow="@ViewData["ProgressPercent"]" aria-valuemin="0" aria-valuemax="100">
+                    @ViewData["ProgressPercent"]%
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card shadow">
-                <div class="card-body">
-                    <p class="text-muted">Total Outstanding</p>
-                    <h3 class="text-warning">RM 450,000.00</h3>
-                </div>
-            </div>
+    }
+  
+
+    @{
+        var userStats = ViewData["GroupedUserKpis"] as List<SharedLibrary.DTOs.SalesPerformanceDto>;
+    }
+    @if (ViewData["Role"]?.ToString() == "Admin" && userStats != null)
+    {
+        <h4 class="mt-4">📊 Sales KPIs by User</h4>
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead class="table-dark">
+                    <tr>
+                        <th>User</th>
+                        <th>Total Sales</th>
+                        <th>Deals</th>
+                        <th>Won</th>
+                        <th>Lost</th>
+                        <th>Success Rate</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in userStats)
+                    {
+                        <tr>
+                            <td>@user.Username</td>
+                            <td>@($"{user.TotalSales:C}")</td>
+                            <td>@user.DealCount</td>
+                            <td>@user.WonCount</td> <!-- ✅ corrected key -->
+                            <td>@user.LostCount</td> <!-- ✅ corrected key -->
+                            <td>@($"{user.SuccessRate:F1}%")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
         </div>
-        <div class="col-md-4">
-            <div class="card shadow">
-                <div class="card-body">
-                    <p class="text-muted">Total Paid</p>
-                    <h3 class="text-primary">RM 750,000.00</h3>
-                </div>
-            </div>
-        </div>
-    </div>
+    }
+
+
+
 
     <!-- Tasks Kanban -->
     <div class="d-flex justify-content-between align-items-center mb-2">

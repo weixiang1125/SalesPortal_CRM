@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Newtonsoft.Json;
+using SharedLibrary.DTOs;
+using SharedLibrary.Models;
 using System.Net.Http.Headers;
 using Task = SharedLibrary.Models.Task;
 
@@ -99,6 +101,85 @@ namespace CRM_Web.Pages.Dashboard//  Make sure this matches your file structure!
             {
                 _logger.LogError(ex, "Failed to load tasks in Dashboard");
             }
+
+
+            var dealResponse = await client.GetAsync("api/deal/GetDealByUserId");
+            if (dealResponse.IsSuccessStatusCode && role != "Admin")
+            {
+                var json = await dealResponse.Content.ReadAsStringAsync();
+                var deals = JsonConvert.DeserializeObject<List<Deal>>(json) ?? new();
+
+                var wonDeals = deals.Where(d => d.Stage == "Closed-Won").ToList();
+                var lostDeals = deals.Where(d => d.Stage == "Closed-Lost").ToList();
+
+
+                decimal targetSales = 500_000.00M;
+                decimal totalSales = wonDeals.Sum(d => d.Value ?? 0);
+                int dealCount = deals.Count;
+                int dealWon = wonDeals.Count;
+                int dealLost = lostDeals.Count;
+                double successRate = dealCount > 0 ? (double)dealWon * 100 / dealCount : 0;
+                ViewData["ProgressPercent"] = (int)(totalSales / targetSales * 100);
+                ViewData["TargetSales"] = targetSales.ToString("C");
+                ViewData["TotalSales"] = totalSales.ToString("C");
+                ViewData["DealCount"] = dealCount;
+                ViewData["DealWon"] = dealWon;
+                ViewData["DealLost"] = dealLost;
+                ViewData["SuccessRate"] = $"{successRate:F1}%";
+            }
+
+            if (role == "Admin")
+            {
+                _logger.LogWarning("Calling API: /api/deal/GetDealsGroupedByUser");
+
+                var groupedResponse = await client.GetAsync("api/deal/GetDealsGroupedByUser");
+                if (groupedResponse.IsSuccessStatusCode)
+                {
+                    var groupedJson = await groupedResponse.Content.ReadAsStringAsync();
+                    _logger.LogWarning("Grouped JSON: {Json}", groupedJson);
+                    var userStats = JsonConvert.DeserializeObject<List<SalesPerformanceDto>>(groupedJson);
+                    ViewData["GroupedUserKpis"] = userStats;
+
+
+                    //  Add this to compute company-wide summary
+                    if (userStats == null || userStats.Count == 0)
+                    {
+                        ViewData["GroupedUserKpis"] = new List<dynamic>();
+                        ViewData["TargetSales"] = "RM 0.00";
+                        ViewData["TotalSales"] = "RM 0.00";
+                        ViewData["DealCount"] = 0;
+                        ViewData["DealWon"] = 0;
+                        ViewData["DealLost"] = 0;
+                        ViewData["SuccessRate"] = "0%";
+                    }
+                    else
+                    {
+                        decimal totalSales = 0;
+                        int dealCount = 0, won = 0, lost = 0;
+
+                        foreach (var user in userStats)
+                        {
+                            totalSales += Convert.ToDecimal(user?.TotalSales ?? 0);
+                            dealCount += Convert.ToInt32(user?.DealCount ?? 0);
+                            won += Convert.ToInt32(user?.WonCount ?? 0);
+                            lost += Convert.ToInt32(user?.LostCount ?? 0);
+                        }
+
+                        double successRate = dealCount > 0 ? (double)won * 100 / dealCount : 0;
+                        int totalUsers = userStats.Count;
+                        decimal totalTarget = totalUsers * 500_000M;
+
+                        ViewData["TargetSales"] = totalTarget.ToString("C");
+                        ViewData["TotalSales"] = totalSales.ToString("C");
+                        ViewData["DealCount"] = dealCount;
+                        ViewData["DealWon"] = won;
+                        ViewData["DealLost"] = lost;
+                        ViewData["SuccessRate"] = $"{successRate:F1}%";
+                    }
+
+                }
+            }
+
 
             return Page();
         }
