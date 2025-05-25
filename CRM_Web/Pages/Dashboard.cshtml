@@ -4,29 +4,102 @@
 @{
     ViewData["Title"] = "Dashboard";
     Layout = "_Layout";
+    var role = ViewData["Role"]?.ToString();
+    var isAdmin = role == "Admin";
+    var userStats = ViewData["GroupedUserKpis"] as List<SharedLibrary.DTOs.SalesPerformanceDto>;
 }
 @inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 
+<style>
+    .task-sidebar {
+        max-height: 100vh;
+        overflow-y: auto;
+    }
+</style>
+
 <div class="container py-5">
     <h2 class="mb-4">Dashboard Overview</h2>
+
     @if (Model.TodayOrOverdueTasks.Any())
     {
-    <div class="alert alert-warning alert-dismissible fade show" role="alert" id="reminderAlert">
-        <strong>Reminder:</strong> You have @Model.TodayOrOverdueTasks.Count task(s) due today or overdue.
-        <br />
-        @Html.Raw(ViewData["TaskReminder"])
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
+        <div class="alert alert-warning alert-dismissible fade show" role="alert" id="reminderAlert">
+            <strong>Reminder:</strong> You have @Model.TodayOrOverdueTasks.Count task(s) due today or overdue.
+            <br />
+            @Html.Raw(ViewData["TaskReminder"])
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
     }
-    @if (ViewData["Role"]?.ToString() == "Admin")
-    {
-        <h5 class="mb-2">📊 Company Sales Summary</h5>
-    }
-    
 
-    <!-- Cards -->
-    @if (ViewData["Role"]?.ToString() == "Admin" || ViewData["Role"]?.ToString() == "User")
+    @if (isAdmin)
     {
+        <div class="row">
+            <!-- Admin Left Column: KPIs + Chart + Table -->
+            <div class="col-lg-8">
+                <h5 class="mb-2">📊 Company Sales Summary</h5>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6"><div class="card card-body text-center"><h6>🎯 Target Sales</h6><h3>@ViewData["TargetSales"]</h3></div></div>
+                    <div class="col-md-6"><div class="card card-body text-center"><h6>💰 Total Sales</h6><h3>@ViewData["TotalSales"]</h3></div></div>
+                    <div class="col-md-6"><div class="card card-body text-center"><h6>📊 Deal Count</h6><h3>@ViewData["DealCount"]</h3></div></div>
+                    <div class="col-md-6"><div class="card card-body text-center"><h6>📈 Success Rate</h6><h3>@ViewData["SuccessRate"]</h3></div></div>
+                    <div class="col-md-6"><div class="card card-body text-center"><h6>🏆 Deal Won</h6><h3>@ViewData["DealWon"]</h3></div></div>
+                    <div class="col-md-6"><div class="card card-body text-center"><h6>❌ Deal Lost</h6><h3>@ViewData["DealLost"]</h3></div></div>
+                    
+                </div>
+
+                <h4 class="mt-4">📊 Sales KPIs by User</h4>
+                <canvas id="salesBarChart" height="100" class="mb-4"></canvas>
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>User</th>
+                                <th>Total Sales</th>
+                                <th>Deals</th>
+                                <th>Won</th>
+                                <th>Lost</th>
+                                <th>Success Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var user in userStats)
+                            {
+                                <tr>
+                                    <td>@user.Username</td>
+                                    <td>@($"{user.TotalSales:C}")</td>
+                                    <td>@user.DealCount</td>
+                                    <td>@user.WonCount</td>
+                                    <td>@user.LostCount</td>
+                                    <td>@($"{user.SuccessRate:F1}%")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Admin Right Column: Task Sidebar -->
+            <div class="col-lg-4">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h4 class="mb-0">Tasks & Reminders</h4>
+                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#taskModal">
+                        <i class="fas fa-plus"></i> Add Task
+                    </button>
+                </div>
+                <div class="task-sidebar">
+                    @foreach (var status in new[] { "Not Started", "In Progress", "Completed" })
+                    {
+                        <div class="card mb-3 shadow-sm">
+                            <div class="card-header bg-light fw-bold">@status</div>
+                            <div class="card-body task-column" data-status="@status" style="min-height: 150px;"></div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- User Layout: KPIs + Kanban -->
         <div class="row g-3 mb-4">
             <div class="col-md-4"><div class="card card-body text-center"><h6>🎯 Target Sales</h6><h3>@ViewData["TargetSales"]</h3></div></div>
             <div class="col-md-4"><div class="card card-body text-center"><h6>💰 Total Sales</h6><h3>@ViewData["TotalSales"]</h3></div></div>
@@ -35,82 +108,28 @@
             <div class="col-md-4"><div class="card card-body text-center"><h6>❌ Deal Lost</h6><h3>@ViewData["DealLost"]</h3></div></div>
             <div class="col-md-4"><div class="card card-body text-center"><h6>📈 Success Rate</h6><h3>@ViewData["SuccessRate"]</h3></div></div>
         </div>
-    }
 
-    @if (ViewData["Role"]?.ToString() == "User")
-    {
-        <div class="mb-4">
-            <h6>📊 Sales Progress</h6>
-            <div class="progress">
-                <div class="progress-bar bg-success" role="progressbar" style="width: @ViewData["ProgressPercent"]%" aria-valuenow="@ViewData["ProgressPercent"]" aria-valuemin="0" aria-valuemax="100">
-                    @ViewData["ProgressPercent"]%
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h4 class="mb-0">Tasks & Reminders</h4>
+            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#taskModal">
+                <i class="fas fa-plus"></i> Add Task
+            </button>
+        </div>
+        <div class="row g-4" id="kanbanBoard">
+            @foreach (var status in new[] { "Not Started", "In Progress", "Completed" })
+            {
+                <div class="col-md-4">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-light fw-bold">@status</div>
+                        <div class="card-body task-column" data-status="@status" style="min-height: 300px;"></div>
+                    </div>
                 </div>
-            </div>
+            }
         </div>
     }
-  
-
-    @{
-        var userStats = ViewData["GroupedUserKpis"] as List<SharedLibrary.DTOs.SalesPerformanceDto>;
-    }
-    @if (ViewData["Role"]?.ToString() == "Admin" && userStats != null)
-    {
-        <h4 class="mt-4">📊 Sales KPIs by User</h4>
-        <canvas id="salesBarChart" height="100" class="mb-4"></canvas>
-
-        <div class="table-responsive">
-            <table class="table table-bordered">
-                <thead class="table-dark">
-                    <tr>
-                        <th>User</th>
-                        <th>Total Sales</th>
-                        <th>Deals</th>
-                        <th>Won</th>
-                        <th>Lost</th>
-                        <th>Success Rate</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var user in userStats)
-                    {
-                        <tr>
-                            <td>@user.Username</td>
-                            <td>@($"{user.TotalSales:C}")</td>
-                            <td>@user.DealCount</td>
-                            <td>@user.WonCount</td> <!-- ✅ corrected key -->
-                            <td>@user.LostCount</td> <!-- ✅ corrected key -->
-                            <td>@($"{user.SuccessRate:F1}%")</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    }
-
-
-
-
-    <!-- Tasks Kanban -->
-    <div class="d-flex justify-content-between align-items-center mb-2">
-        <h4 class="mb-0">Tasks & Reminders</h4>
-        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#taskModal">
-            <i class="fas fa-plus"></i> Add Task
-        </button>
-    </div>
-    <div class="row g-4" id="kanbanBoard">
-        @foreach (var status in new[] { "Not Started", "In Progress", "Completed" })
-        {
-            <div class="col-md-4">
-                <div class="card shadow-sm">
-                    <div class="card-header bg-light fw-bold">@status</div>
-                    <div class="card-body task-column" data-status="@status" style="min-height: 300px;"></div>
-                </div>
-            </div>
-        }
-    </div>
 </div>
 
-<!-- Modal -->
+<!-- Task Modal (same as before) -->
 <div class="modal fade" id="taskModal" tabindex="-1" aria-labelledby="taskModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <form class="modal-content" id="taskForm">
@@ -120,38 +139,12 @@
             </div>
             <div class="modal-body">
                 <input type="hidden" id="taskId" />
-                <div class="mb-2">
-                    <label class="form-label">Task Name</label>
-                    <input type="text" class="form-control" id="taskName" required />
-                </div>
-                <div class="mb-2">
-                    <label class="form-label">Description</label>
-                    <textarea class="form-control" id="taskDescription"></textarea>
-                </div>
-                <div class="mb-2">
-                    <label class="form-label">Due Date</label>
-                    <input type="date" class="form-control" id="dueDate" required />
-                </div>
-                <div class="mb-2">
-                    <label class="form-label">Status</label>
-                    <select class="form-select" id="status" required>
-                        <option value="Not Started">Not Started</option>
-                        <option value="In Progress">In Progress</option>
-                        <option value="Completed">Completed</option>
-                    </select>
-                </div>
-                <div class="mb-2">
-                    <label class="form-label">Contact</label>
-                    <select class="form-select" id="contactId">
-                        <option value="">-- Optional --</option>
-                    </select>
-                </div>
-                <div class="mb-2">
-                    <label class="form-label">Deal</label>
-                    <select class="form-select" id="dealId">
-                        <option value="">-- Optional --</option>
-                    </select>
-                </div>
+                <div class="mb-2"><label class="form-label">Task Name</label><input type="text" class="form-control" id="taskName" required /></div>
+                <div class="mb-2"><label class="form-label">Description</label><textarea class="form-control" id="taskDescription"></textarea></div>
+                <div class="mb-2"><label class="form-label">Due Date</label><input type="date" class="form-control" id="dueDate" required /></div>
+                <div class="mb-2"><label class="form-label">Status</label><select class="form-select" id="status" required><option value="Not Started">Not Started</option><option value="In Progress">In Progress</option><option value="Completed">Completed</option></select></div>
+                <div class="mb-2"><label class="form-label">Contact</label><select class="form-select" id="contactId"><option value="">-- Optional --</option></select></div>
+                <div class="mb-2"><label class="form-label">Deal</label><select class="form-select" id="dealId"><option value="">-- Optional --</option></select></div>
             </div>
             <div class="modal-footer">
                 <button type="submit" class="btn btn-success"><i class="fas fa-save"></i> Save</button>
