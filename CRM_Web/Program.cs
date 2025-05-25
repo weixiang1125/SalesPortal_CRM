@@ -10,6 +10,7 @@ builder.Services.Configure<ApiSettings>(builder.Configuration.GetSection("ApiSet
 builder.Services.AddRazorPages();
 builder.Services.AddHttpClient();
 builder.Services.AddSession(); // add this before builder.Build()
+builder.Services.AddHttpContextAccessor();
 
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>

@@ -149,6 +149,13 @@
                 const data = JSON.parse(responseText);  // Safely parse the response
                 const token = data.token;
 
+                await fetch("/Login?handler=SetToken", {
+                    method: "POST",
+                    credentials: "include",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(token)
+                });
+
                 if (!token) {
                     showError("Invalid login response");
                     return;

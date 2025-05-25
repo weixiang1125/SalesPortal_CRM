@@ -6,8 +6,8 @@ namespace SharedLibrary.Models
     {
         [Key]
         public int TaskID { get; set; }
-        public int ContactID { get; set; }
-        public int DealID { get; set; }
+        public int? ContactID { get; set; }
+        public int? DealID { get; set; }
         public string? TaskName { get; set; }
         public string? TaskDescription { get; set; }
         public DateTime? DueDate { get; set; }

@@ -24,6 +24,19 @@ namespace CRM_Web.Pages
 
             return new JsonResult(new { success = true });
         }
+        public IActionResult OnPostSetToken([FromBody] string token)
+        {
+            Response.Cookies.Append("authToken", token, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                Path = "/"
+            });
+
+            return new JsonResult(new { success = true });
+        }
+
 
         public class SessionUser
         {
