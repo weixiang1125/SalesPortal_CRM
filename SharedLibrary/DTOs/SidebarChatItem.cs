@@ -7,6 +7,8 @@
         public DateTime? Date { get; set; }
         public string Group { get; set; } = "";
         public bool IsActive { get; set; }
+        public string? AgentName { get; set; }
+
     }
 
 }

@@ -110,10 +110,26 @@ namespace CRM_Web.Pages.Chat
                     .FirstOrDefaultAsync();
                 if (contactId == 0) continue;
 
-                var chanId = await _context.DBChatChannel
-                    .Where(c => c.UserID == userId && c.ContactID == contactId)
-                    .Select(c => c.ChannelID)
-                    .FirstOrDefaultAsync();
+                var role = HttpContext.Session.GetString("Role");
+                int chanId;
+                string? agentName = null;
+
+                if (role == "Admin")
+                {
+                    var chan = await _context.DBChatChannel
+                        .Include(c => c.User)
+                        .FirstOrDefaultAsync(c => c.ContactID == contactId);
+
+                    chanId = chan?.ChannelID ?? 0;
+                    agentName = chan?.User?.Username;
+                }
+                else
+                {
+                    chanId = await _context.DBChatChannel
+                        .Where(c => c.UserID == userId && c.ContactID == contactId)
+                        .Select(c => c.ChannelID)
+                        .FirstOrDefaultAsync();
+                }
                 if (chanId == 0) continue;
 
                 var lastMsg = await _context.DBChatMessage
@@ -148,7 +164,8 @@ namespace CRM_Web.Pages.Chat
                        "[File]",
                     Date = localDate,
                     Group = group,
-                    IsActive = SelectedPhone == normalized
+                    IsActive = SelectedPhone == normalized,
+                    AgentName = agentName
                 });
             }
 
@@ -163,15 +180,22 @@ namespace CRM_Web.Pages.Chat
         public async Task<JsonResult> OnGetSidebarAsync()
         {
             var userIdStr = HttpContext.Session.GetString("UserID");
+            var role = HttpContext.Session.GetString("Role");
             if (string.IsNullOrEmpty(userIdStr))
                 return new JsonResult(new { success = false, error = "Not logged in" });
 
             var userId = int.Parse(userIdStr);
 
-            // Reload latest contacts from ChatChannel
-            var recentPhones = await _context.DBChatChannel
+            var recentPhonesQuery = _context.DBChatChannel
                 .Include(c => c.Contact)
-                .Where(c => c.UserID == userId && c.Contact.Phone != null)
+                .Where(c => c.Contact.Phone != null);
+
+            if (role != "Admin")
+            {
+                recentPhonesQuery = recentPhonesQuery.Where(c => c.UserID == userId);
+            }
+
+            var recentPhones = await recentPhonesQuery
                 .OrderByDescending(c => c.CreatedDate)
                 .Select(c => c.Contact.Phone!)
                 .Distinct()
@@ -190,10 +214,25 @@ namespace CRM_Web.Pages.Chat
 
                 if (contactId == 0) continue;
 
-                var chanId = await _context.DBChatChannel
-                    .Where(c => c.UserID == userId && c.ContactID == contactId)
-                    .Select(c => c.ChannelID)
-                    .FirstOrDefaultAsync();
+                int chanId = 0;
+                string? agentName = null;
+
+                if (role == "Admin")
+                {
+                    var chan = await _context.DBChatChannel
+                        .Include(c => c.User)
+                        .FirstOrDefaultAsync(c => c.ContactID == contactId);
+
+                    chanId = chan?.ChannelID ?? 0;
+                    agentName = chan?.User?.Username;
+                }
+                else
+                {
+                    chanId = await _context.DBChatChannel
+                        .Where(c => c.UserID == userId && c.ContactID == contactId)
+                        .Select(c => c.ChannelID)
+                        .FirstOrDefaultAsync();
+                }
 
                 if (chanId == 0) continue;
 
@@ -224,19 +263,18 @@ namespace CRM_Web.Pages.Chat
                 {
                     phone = normalized,
                     text = lastMsg == null ? "" :
-                       lastMsg.MessageType == "text" ? lastMsg.MessageText :
-                       lastMsg.MessageType == "image" ? "[Photo]" :
-                       lastMsg.MessageType == "video" ? "[Video]" :
-                       lastMsg.MessageType == "audio" ? "[Audio]" :
-                       lastMsg.MessageType == "document" ? "[Document]" :
-                       "[File]",
-
+                           lastMsg.MessageType == "text" ? lastMsg.MessageText :
+                           lastMsg.MessageType == "image" ? "[Photo]" :
+                           lastMsg.MessageType == "video" ? "[Video]" :
+                           lastMsg.MessageType == "audio" ? "[Audio]" :
+                           lastMsg.MessageType == "document" ? "[Document]" :
+                           "[File]",
                     date = convertedDate,
                     timeString = convertedDate?.ToString("hh:mm tt"),
                     unreadCount,
-                    group = groupLabel
+                    group = groupLabel,
+                    agentName // include this
                 });
-
             }
 
             return new JsonResult(new
@@ -246,6 +284,7 @@ namespace CRM_Web.Pages.Chat
                 lastMessages
             });
         }
+
 
         public async Task<IActionResult> OnGetMessagesAsync(string phone)
         {
@@ -262,10 +301,25 @@ namespace CRM_Web.Pages.Chat
             normalizedPhone = "+" + normalizedPhone;
 
             // Get correct channel
-            var channelId = await _context.DBChatChannel
-                .Where(c => c.UserID == userId && c.Contact.Phone == normalizedPhone)
-                .Select(c => c.ChannelID)
-                .FirstOrDefaultAsync();
+            var role = HttpContext.Session.GetString("Role");
+
+            int channelId;
+
+            if (role == "Admin")
+            {
+                channelId = await _context.DBChatChannel
+                    .Where(c => c.Contact.Phone == normalizedPhone)
+                    .Select(c => c.ChannelID)
+                    .FirstOrDefaultAsync();
+            }
+            else
+            {
+                channelId = await _context.DBChatChannel
+                    .Where(c => c.UserID == userId && c.Contact.Phone == normalizedPhone)
+                    .Select(c => c.ChannelID)
+                    .FirstOrDefaultAsync();
+            }
+
 
             if (channelId == 0)
                 return new JsonResult(new List<object>());
@@ -301,10 +355,25 @@ namespace CRM_Web.Pages.Chat
             phone = phone.TrimStart('+');
             phone = "+" + phone;
 
-            var channelId = await _context.DBChatChannel
-                .Where(c => c.UserID == userId && c.Contact.Phone == phone)
-                .Select(c => c.ChannelID)
-                .FirstOrDefaultAsync();
+            var role = HttpContext.Session.GetString("Role");
+
+            int channelId;
+
+            if (role == "Admin")
+            {
+                channelId = await _context.DBChatChannel
+                    .Where(c => c.Contact.Phone == phone)
+                    .Select(c => c.ChannelID)
+                    .FirstOrDefaultAsync();
+            }
+            else
+            {
+                channelId = await _context.DBChatChannel
+                    .Where(c => c.UserID == userId && c.Contact.Phone == phone)
+                    .Select(c => c.ChannelID)
+                    .FirstOrDefaultAsync();
+            }
+
 
             if (channelId == 0) return NotFound();
 

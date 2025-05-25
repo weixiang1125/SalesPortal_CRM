@@ -225,7 +225,13 @@
 
                     <a href="#" onclick="event.preventDefault(); selectChat('@item.Phone')" class="list-group-item list-group-item-action @(item.IsActive ? "active" : "")">
                         <div class="d-flex justify-content-between align-items-center">
-                            <strong>@item.Phone</strong>
+                        <strong>
+                            @item.Phone
+                            @if (!string.IsNullOrEmpty(item.AgentName))
+                            {
+                                <span class="text-muted small">(@item.AgentName)</span>
+                            }
+                        </strong>
                             <small class="text-muted">@time</small>
                         </div>
                         <div class="d-flex justify-content-between align-items-center">
@@ -703,7 +709,11 @@
                         list.innerHTML += `
                     <a href="?phone=${encodeURIComponent(msg.phone)}" class="list-group-item list-group-item-action ${activeClass}">
                         <div class="d-flex justify-content-between align-items-center">
-                            <strong>${msg.phone}</strong>
+                            <strong>
+                                ${msg.phone}
+                                ${msg.agentName ? `<span class="text-muted small">(${msg.agentName})</span>` : ""}
+                            </strong>
+
                             <small class="text-muted">${time}</small>
                         </div>
                         <div class="d-flex justify-content-between align-items-center">
