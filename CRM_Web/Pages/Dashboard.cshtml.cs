@@ -69,16 +69,29 @@ namespace CRM_Web.Pages.Dashboard//  Make sure this matches your file structure!
                     // Add this block to build the reminder content
                     if (TodayOrOverdueTasks.Any())
                     {
-                        var taskDetails = TodayOrOverdueTasks
-                            .Select(t => $"- <strong>{t.TaskName}</strong>: {t.TaskDescription}")
-                            .ToList();
+                        var taskDetails = TodayOrOverdueTasks.Select(t =>
+                        {
+                            var isOverdue = t.DueDate?.Date < today;
+                            var color = isOverdue ? "text-danger" : "text-dark";
+                            var dueDate = t.DueDate?.ToString("dd MMM yyyy") ?? "-";
+                            var contact = t.Contact?.Name ?? "-";
+                            var deal = t.Deal?.DealName ?? "-"; //  include deal name
 
-                        ViewData["TaskReminder"] = string.Join("<br/>", taskDetails);
+                            return $@"
+                                <div class='{color}'>
+                                    • <strong>{t.TaskName}</strong>: {t.TaskDescription}<br/>
+                                    <small>Due: {dueDate} | Contact: {contact} | Deal: {deal}</small>
+                                </div>";
+                        });
+
+                        ViewData["TaskReminder"] = string.Join("", taskDetails);
                     }
                     else
                     {
                         ViewData["TaskReminder"] = null;
                     }
+
+
                 }
 
             }
