@@ -314,8 +314,10 @@
         let selectedPhone = decodeURIComponent("@Model.SelectedPhone".replace(/&#x2B;|&#43;/g, "%2B"));
         let opusRecorder;
         let isRecording = false;
+        const userRole = "@HttpContext.Session.GetString("Role")";
 
         document.getElementById("recordButton").addEventListener("click", async () => {
+            if (userRole === "Admin") return;
             if (!isRecording) {
                 // Start recording
                 opusRecorder = new Recorder({
@@ -839,7 +841,14 @@
             // Init
             window.addEventListener("load", async () => {
                 await startSignalR();        // ✅ Handles connection + group join
-                await loadMessages();        // ✅ Pulls missed messages
+                await loadMessages();     
+                
+                if ("@HttpContext.Session.GetString("Role")" === "Admin") {
+                    document.getElementById("chatInput").disabled = true;
+                    document.getElementById("sendButton").disabled = true;
+                    document.getElementById("recordButton").disabled = true;
+                    document.getElementById("fileInput").disabled = true;
+                }
             });
 
 
