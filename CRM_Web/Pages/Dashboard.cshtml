@@ -5,7 +5,6 @@
     ViewData["Title"] = "Dashboard";
     Layout = "_Layout";
     var role = ViewData["Role"]?.ToString();
-    var isAdmin = role == "Admin";
     var userStats = ViewData["GroupedUserKpis"] as List<SharedLibrary.DTOs.SalesPerformanceDto>;
 }
 @inject Microsoft.Extensions.Configuration.IConfiguration Configuration
@@ -30,12 +29,14 @@
         </div>
     }
 
-    @if (isAdmin)
+    @if (role == "Admin")
     {
+        <!-- Admin Layout -->
         <div class="row">
-            <!-- Admin Left Column: KPIs + Chart + Table -->
+            <!-- KPI + Chart Left -->
             <div class="col-lg-8">
                 <h5 class="mb-2">📊 Company Sales Summary</h5>
+
                 <div class="row g-3 mb-4">
                     <div class="col-md-6"><div class="card card-body text-center"><h6>🎯 Target Sales</h6><h3>@ViewData["TargetSales"]</h3></div></div>
                     <div class="col-md-6"><div class="card card-body text-center"><h6>💰 Total Sales</h6><h3>@ViewData["TotalSales"]</h3></div></div>
@@ -43,11 +44,11 @@
                     <div class="col-md-6"><div class="card card-body text-center"><h6>📈 Success Rate</h6><h3>@ViewData["SuccessRate"]</h3></div></div>
                     <div class="col-md-6"><div class="card card-body text-center"><h6>🏆 Deal Won</h6><h3>@ViewData["DealWon"]</h3></div></div>
                     <div class="col-md-6"><div class="card card-body text-center"><h6>❌ Deal Lost</h6><h3>@ViewData["DealLost"]</h3></div></div>
-                    
                 </div>
 
-                <h4 class="mt-4">📊 Sales KPIs by User</h4>
+                <h5 class="mt-4">📊 Sales KPIs by User</h5>
                 <canvas id="salesBarChart" height="100" class="mb-4"></canvas>
+
                 <div class="table-responsive">
                     <table class="table table-bordered">
                         <thead class="table-dark">
@@ -77,8 +78,8 @@
                 </div>
             </div>
 
-            <!-- Admin Right Column: Task Sidebar -->
-            <div class="col-lg-4">
+            <!-- Task Right Sidebar -->
+            <div class="col-lg-4 mt-4 mt-lg-0">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <h4 class="mb-0">Tasks & Reminders</h4>
                     <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#taskModal">
@@ -99,7 +100,7 @@
     }
     else
     {
-        <!-- User Layout: KPIs + Kanban -->
+        <!-- User Layout -->
         <div class="row g-3 mb-4">
             <div class="col-md-4"><div class="card card-body text-center"><h6>🎯 Target Sales</h6><h3>@ViewData["TargetSales"]</h3></div></div>
             <div class="col-md-4"><div class="card card-body text-center"><h6>💰 Total Sales</h6><h3>@ViewData["TotalSales"]</h3></div></div>
@@ -109,6 +110,16 @@
             <div class="col-md-4"><div class="card card-body text-center"><h6>📈 Success Rate</h6><h3>@ViewData["SuccessRate"]</h3></div></div>
         </div>
 
+        <div class="mb-4">
+            <h6>📊 Sales Progress</h6>
+            <div class="progress">
+                <div class="progress-bar bg-success" role="progressbar" style="width: @ViewData["ProgressPercent"]%" aria-valuenow="@ViewData["ProgressPercent"]" aria-valuemin="0" aria-valuemax="100">
+                    @ViewData["ProgressPercent"]%
+                </div>
+            </div>
+        </div>
+
+        <!-- Full-width Task Kanban -->
         <div class="d-flex justify-content-between align-items-center mb-2">
             <h4 class="mb-0">Tasks & Reminders</h4>
             <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#taskModal">
