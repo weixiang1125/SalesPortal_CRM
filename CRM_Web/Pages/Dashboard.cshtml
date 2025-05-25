@@ -1,4 +1,5 @@
 ﻿@page
+@using Newtonsoft.Json
 @model CRM_Web.Pages.Dashboard.DashboardModel
 @{
     ViewData["Title"] = "Dashboard";
@@ -55,6 +56,8 @@
     @if (ViewData["Role"]?.ToString() == "Admin" && userStats != null)
     {
         <h4 class="mt-4">📊 Sales KPIs by User</h4>
+        <canvas id="salesBarChart" height="100" class="mb-4"></canvas>
+
         <div class="table-responsive">
             <table class="table table-bordered">
                 <thead class="table-dark">
@@ -161,8 +164,40 @@
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    @if (ViewData["Role"]?.ToString() == "Admin" && userStats != null)
+    {
+        <script>
+            const labels = @Html.Raw(JsonConvert.SerializeObject(userStats.Select(u => u.Username)));
+            const data = @Html.Raw(JsonConvert.SerializeObject(userStats.Select(u => u.TotalSales)));
+
+            new Chart(document.getElementById('salesBarChart'), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Total Sales (RM)',
+                        data: data,
+                        backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { callback: value => `RM ${value.toLocaleString()}` }
+                        }
+                    }
+                }
+            });
+        </script>
+    }
     <script>
         const API_BASE = '@Configuration["ApiSettings:BaseUrl"]';
+
+        
 
         function formatDate(dateString) {
             const d = new Date(dateString);
