@@ -1,6 +1,7 @@
 ﻿using CRM_API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SharedLibrary.DTOs;
 using SharedLibrary.Utils;
 using Task = SharedLibrary.Models.Task;
 
@@ -22,9 +23,6 @@ namespace CRM_API.Controllers
         [HttpGet("GetAll")]
         public async Task<IActionResult> GetAll()
         {
-            foreach (var claim in User.Claims)
-                Console.WriteLine($"[CLAIM] {claim.Type} = {claim.Value}");
-
             var tasks = await _taskService.GetTasksForUserAsync(CurrentUserId, IsAdmin);
             return Ok(tasks);
         }
@@ -40,8 +38,24 @@ namespace CRM_API.Controllers
         [HttpGet("GetById/{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var task = await _taskService.GetTaskByIdAsync(id);
-            return task != null ? Ok(task) : NotFound();
+            var t = await _taskService.GetTaskByIdAsync(id);
+            if (t == null)
+                return NotFound();
+
+            var dto = new TaskDto
+            {
+                TaskID = t.TaskID,
+                TaskName = t.TaskName,
+                TaskDescription = t.TaskDescription,
+                DueDate = t.DueDate,
+                Status = t.Status,
+                ContactID = t.ContactID,
+                DealID = t.DealID,
+                ContactName = t.Contact?.Name,
+                DealName = t.Deal?.DealName
+            };
+
+            return Ok(dto);
         }
 
         [Authorize]

@@ -4,7 +4,6 @@ using Newtonsoft.Json;
 using SharedLibrary.DTOs;
 using SharedLibrary.Models;
 using System.Net.Http.Headers;
-using Task = SharedLibrary.Models.Task;
 
 namespace CRM_Web.Pages.Dashboard//  Make sure this matches your file structure!
 {
@@ -14,9 +13,9 @@ namespace CRM_Web.Pages.Dashboard//  Make sure this matches your file structure!
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IConfiguration _configuration;
         private readonly ILogger<DashboardModel> _logger;
-        public List<Task> Tasks { get; set; } = new();
-        public Dictionary<string, List<Task>> GroupedTasks { get; set; } = new();
-        public List<Task> TodayOrOverdueTasks { get; set; } = new();
+        public List<TaskDto> Tasks { get; set; } = new();
+        public Dictionary<string, List<TaskDto>> GroupedTasks { get; set; } = new();
+        public List<TaskDto> TodayOrOverdueTasks { get; set; } = new();
 
         public DashboardModel(IHttpClientFactory factory, IHttpContextAccessor accessor, IConfiguration configuration, ILogger<DashboardModel> logger)
         {
@@ -53,7 +52,7 @@ namespace CRM_Web.Pages.Dashboard//  Make sure this matches your file structure!
                 if (response.IsSuccessStatusCode)
                 {
                     var json = await response.Content.ReadAsStringAsync();
-                    var allTasks = JsonConvert.DeserializeObject<List<Task>>(json);
+                    var allTasks = JsonConvert.DeserializeObject<List<TaskDto>>(json);
                     _logger.LogWarning("Tasks loaded: {Count}", allTasks.Count);
 
 
@@ -76,8 +75,9 @@ namespace CRM_Web.Pages.Dashboard//  Make sure this matches your file structure!
                             var isOverdue = t.DueDate?.Date < today;
                             var color = isOverdue ? "text-danger" : "text-dark";
                             var dueDate = t.DueDate?.ToString("dd MMM yyyy") ?? "-";
-                            var contact = t.Contact?.Name ?? "-";
-                            var deal = t.Deal?.DealName ?? "-"; //  include deal name
+                            var contact = t.ContactName ?? "-";
+                            var deal = t.DealName ?? "-";
+
 
                             return $@"
                                 <div class='{color}'>

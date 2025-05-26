@@ -160,6 +160,30 @@
     </div>
 </div>
 
+<div class="modal fade" id="taskModal" tabindex="-1" aria-labelledby="taskModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form class="modal-content" id="taskForm">
+            <div class="modal-header">
+                <h5 class="modal-title" id="taskModalLabel">Task</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-2 text-muted small" id="taskContextLabel"></div>
+                <input type="hidden" id="taskId" />
+                <div class="mb-2"><label class="form-label">Task Name</label><input type="text" class="form-control" id="taskName" required /></div>
+                <div class="mb-2"><label class="form-label">Description</label><textarea class="form-control" id="taskDescription"></textarea></div>
+                <div class="mb-2"><label class="form-label">Due Date</label><input type="date" class="form-control" id="dueDate" required /></div>
+                <div class="mb-2"><label class="form-label">Status</label><select class="form-select" id="status" required><option value="Not Started">Not Started</option><option value="In Progress">In Progress</option><option value="Completed">Completed</option></select></div>
+                <div class="mb-2"><label class="form-label">Contact</label><select class="form-select" id="contactId"><option value="">-- Optional --</option></select></div>
+                <div class="mb-2"><label class="form-label">Deal</label><select class="form-select" id="dealId"><option value="">-- Optional --</option></select></div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-success"><i class="fas fa-save"></i> Save</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
 @section Styles {
         <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" />
         <style>
@@ -187,6 +211,62 @@
 
         <script>
             const API_BASE = '@Configuration["ApiSettings:BaseUrl"]';
+
+                async function loadContactsAndDeals() {
+            const [contacts, deals] = await Promise.all([
+                fetch(`${API_BASE}/api/contact/GetContactsByUserId`, { credentials: 'include' }).then(r => r.json()),
+                fetch(`${API_BASE}/api/deal/GetDealByUserId`, { credentials: 'include' }).then(r => r.json())
+            ]);
+
+            const contactOpts = (contacts.$values ?? contacts).map(c => `<option value="${c.contactID}">${c.name}</option>`).join('');
+            document.getElementById("contactId").innerHTML = `<option value="">-- Optional --</option>${contactOpts}`;
+
+            const dealOpts = (deals.$values ?? deals).map(d => `<option value="${d.dealID}">${d.dealName}</option>`).join('');
+            document.getElementById("dealId").innerHTML = `<option value="">-- Optional --</option>${dealOpts}`;
+        }
+
+        async function createOrUpdateTask(e) {
+            e.preventDefault();
+
+            const dto = {
+                taskID: parseInt(document.getElementById("taskId").value || 0),
+                taskName: document.getElementById("taskName").value,
+                taskDescription: document.getElementById("taskDescription").value,
+                dueDate: document.getElementById("dueDate").value,
+                status: document.getElementById("status").value,
+                contactID: document.getElementById("contactId").value || null,
+                dealID: document.getElementById("dealId").value || null
+            };
+
+            const method = dto.taskID > 0 ? 'PUT' : 'POST';
+            const url = `${API_BASE}/api/task/${dto.taskID > 0 ? `Update/${dto.taskID}` : 'Create'}`;
+
+            await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify(dto)
+            });
+
+             //  Full cleanup to prevent overlay/focus freeze
+            const modalEl = document.getElementById("taskModal");
+            const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+            modalInstance.hide();
+
+            // Manually remove leftover classes and backdrop if stuck
+            document.body.classList.remove("modal-open");
+            modalEl.classList.remove("show");
+            modalEl.style.display = "none";
+            modalEl.removeAttribute("aria-modal");
+            modalEl.setAttribute("aria-hidden", "true");
+            document.querySelectorAll(".modal-backdrop").forEach(el => el.remove());
+
+            e.target.reset();
+        }
+
+
+
+        document.getElementById("taskForm").addEventListener("submit", createOrUpdateTask);
 
             async function loadContacts() {
                 try {
@@ -251,6 +331,12 @@
                         <td class="admin-column">${d.updatedByUsername ?? ''}</td>
                         <td>${d.contactName}</td>
                         <td>
+                             <button class="btn btn-sm btn-secondary btn-add-task"
+                                data-contactid="${d.contactID}" data-contactname="${d.contactName}" data-dealid="${d.dealID}" data-dealname="${d.dealName}"
+                                data-bs-toggle="modal" data-bs-target="#taskModal">
+                                <i class="fas fa-tasks"></i>
+                            </button>
+
                             <button class="btn btn-sm btn-primary btn-edit" data-id="${d.dealID}"><i class="fas fa-edit"></i></button>
                             <button class="btn btn-sm btn-danger" onclick="confirmDelete('${d.dealID}')"><i class="fas fa-trash"></i></button>
                         </td>
@@ -444,6 +530,24 @@
                         error: () => alert("Failed to load deal")
                     });
                 });
+
+                $(document).on("click", ".btn-add-task", function () {
+                    const dealId = $(this).data("dealid");
+                    const contactId = $(this).data("contactid");
+                    const dealName = $(this).data("dealname") || "";
+                    const contactName = $(this).data("contactname") || "";
+
+                    $("#taskContextLabel").text(`Creating task for: ${dealName || contactName}`);
+                    $("#dealId").val(""); // clear first
+                    $("#contactId").val("");
+
+                    // Load dropdowns, then set value after a delay
+                    loadContactsAndDeals().then(() => {
+                        if (dealId) $("#dealId").val(dealId);
+                        if (contactId) $("#contactId").val(contactId);
+                    });
+                });
+
 
             });
         </script>

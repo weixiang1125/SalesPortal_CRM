@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SharedLibrary;
+using SharedLibrary.DTOs;
 using SharedLibrary.Utils;
 using Task = SharedLibrary.Models.Task;
 
@@ -14,14 +15,27 @@ namespace CRM_API.Services
             _context = context;
         }
 
-        public async Task<List<Task>> GetTasksForUserAsync(int userId, bool isAdmin)
+        public async Task<List<TaskDto>> GetTasksForUserAsync(int userId, bool isAdmin)
         {
-            return await _context.DBTask
-                .Include(t => t.Deal)
+            var query = _context.DBTask
                 .Include(t => t.Contact)
-                .Where(t => t.CreatedBy == userId)
+                .Include(t => t.Deal)
+                .Where(t => isAdmin || t.CreatedBy == userId)
                 .OrderByDescending(t => t.DueDate)
-                .ToListAsync();
+                .Select(t => new TaskDto
+                {
+                    TaskID = t.TaskID,
+                    TaskName = t.TaskName,
+                    TaskDescription = t.TaskDescription,
+                    DueDate = t.DueDate,
+                    Status = t.Status,
+                    ContactID = t.ContactID,
+                    DealID = t.DealID,
+                    ContactName = t.Contact != null ? t.Contact.Name : null,
+                    DealName = t.Deal != null ? t.Deal.DealName : null
+                });
+
+            return await query.ToListAsync();
         }
 
         public async Task<List<Task>> GetAllTasksFromDbAsync()

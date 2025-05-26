@@ -225,8 +225,8 @@
                     <div><strong>${task.taskName}</strong></div>
                     <div class="text-muted small">${task.taskDescription || ''}</div>
                     <div class="text-muted small">Due: ${formatDate(task.dueDate)}</div>
-                    <div class="text-muted small">Contact: ${task.contact?.name || '-'}</div>
-                    <div class="text-muted small">Deal: ${task.deal?.dealName || '-'}</div>
+                     <div class="text-muted small">Contact: ${task.contactName || '-'}</div>
+                     <div class="text-muted small">Deal: ${task.dealName || '-'}</div>
                     <div class="mt-2 d-flex justify-content-end gap-2">
                         <button class="btn btn-sm btn-primary" onclick="editTask(${task.taskID})"><i class="fas fa-pen"></i></button>
                         <button class="btn btn-sm btn-danger" onclick="deleteTask(${task.taskID})"><i class="fas fa-trash"></i></button>
