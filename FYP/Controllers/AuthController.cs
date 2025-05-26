@@ -46,7 +46,9 @@ namespace CRM_API.Controllers
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             var token = await _authService.LoginAsync(request.Username, request.Password);
-            if (token == null) return Unauthorized();
+            if (token == null)
+                return Unauthorized(new { message = "Invalid credentials" });
+
 
             var user = await _usersService.GetUserByUsernameAsync(request.Username);
 
