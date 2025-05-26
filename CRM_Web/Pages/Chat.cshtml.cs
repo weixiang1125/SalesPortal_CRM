@@ -58,9 +58,9 @@ namespace CRM_Web.Pages.Chat
                 .Trim();
             SelectedPhone = raw.StartsWith("+") ? raw : "+" + raw;
 
-            // Ensure the contact exists
             var contact = await _context.DBContacts.FirstOrDefaultAsync(c => c.Phone == SelectedPhone);
             ContactName = contact?.Name ?? "";
+
 
             if (contact == null)
             {
@@ -173,6 +173,11 @@ namespace CRM_Web.Pages.Chat
                           : msgDay.ToString("MMMM dd, yyyy");
                 }
 
+                var contactInLoop = await _context.DBContacts
+                    .FirstOrDefaultAsync(c => c.Phone == normalized);
+
+                var contactNameInLoop = contactInLoop?.Name ?? "";
+
                 GroupedLastMessages.Add(new SidebarChatItem
                 {
                     Phone = normalized,
@@ -187,8 +192,9 @@ namespace CRM_Web.Pages.Chat
                     Group = group,
                     IsActive = SelectedPhone == normalized,
                     AgentName = agentName,
-                    ContactName = contact?.Name
+                    ContactName = contactNameInLoop // Correct per item
                 });
+
             }
 
             GroupedLastMessages = GroupedLastMessages
@@ -369,7 +375,6 @@ namespace CRM_Web.Pages.Chat
         }
 
         [IgnoreAntiforgeryToken]
-        [HttpPost]
         public async Task<IActionResult> OnPostMarkAsReadAsync([FromBody] string phone)
         {
             var userIdStr = HttpContext.Session.GetString("UserID");
