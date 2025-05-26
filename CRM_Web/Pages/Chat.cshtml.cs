@@ -74,28 +74,46 @@ namespace CRM_Web.Pages.Chat
                 _context.DBContacts.Add(contact);
                 await _context.SaveChangesAsync();
             }
+            var role = HttpContext.Session.GetString("Role");
 
-            // Ensure the channel exists
-            var channel = await _context.DBChatChannel
-                .FirstOrDefaultAsync(c => c.UserID == userId && c.ContactID == contact.ContactID);
-            if (channel == null)
+            // Ensure the channel exists (but skip for Admin)
+            ChatChannel? channel = null;
+            if (role == "Admin")
             {
-                channel = new ChatChannel
+                channel = await _context.DBChatChannel
+                    .Include(c => c.User)
+                    .FirstOrDefaultAsync(c => c.ContactID == contact.ContactID);
+            }
+            else
+            {
+                channel = await _context.DBChatChannel
+                    .FirstOrDefaultAsync(c => c.UserID == userId && c.ContactID == contact.ContactID);
+
+                if (channel == null)
                 {
-                    UserID = userId,
-                    ContactID = contact.ContactID,
-                    CreatedDate = TimeHelper.Now(),
-                    Status = "Active"
-                };
-                _context.DBChatChannel.Add(channel);
-                await _context.SaveChangesAsync();
+                    channel = new ChatChannel
+                    {
+                        UserID = userId,
+                        ContactID = contact.ContactID,
+                        CreatedDate = TimeHelper.Now(),
+                        Status = "Active"
+                    };
+                    _context.DBChatChannel.Add(channel);
+                    await _context.SaveChangesAsync();
+                }
             }
 
+
             // Load all messages for this chat
-            Messages = await _context.DBChatMessage
-                .Where(m => m.ChannelID == channel.ChannelID)
-                .OrderBy(m => m.CreatedDate)
-                .ToListAsync();
+            Messages = new List<ChatMessage>();
+
+            if (channel != null)
+            {
+                Messages = await _context.DBChatMessage
+                    .Where(m => m.ChannelID == channel.ChannelID)
+                    .OrderBy(m => m.CreatedDate)
+                    .ToListAsync();
+            }
 
             // Timezone conversion reference
             var mytZone = TimeZoneInfo.FindSystemTimeZoneById("Singapore Standard Time");
@@ -113,7 +131,7 @@ namespace CRM_Web.Pages.Chat
                     .FirstOrDefaultAsync();
                 if (contactId == 0) continue;
 
-                var role = HttpContext.Session.GetString("Role");
+
                 int chanId;
                 string? agentName = null;
 
