@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SharedLibrary;
 using SharedLibrary.Models;
-
 namespace CRM_API.Services
 {
     public class UsersService : IUsersService
@@ -18,6 +17,7 @@ namespace CRM_API.Services
             return await _dbContext.DBUsers
                 .FirstOrDefaultAsync(u => u.Username == username);
         }
+
 
         public async Task<Users?> GetUsersByIdAsync(int id)
         {

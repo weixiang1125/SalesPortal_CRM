@@ -1,0 +1,79 @@
+﻿@page
+@model CRM_Web.Pages.Profile.ProfileModel
+@{
+    ViewData["Title"] = "My Profile";
+}
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+
+<div class="container mt-5">
+    <h3>👤 My Profile</h3>
+    <dl class="row">
+        <dt class="col-sm-3">Username</dt>
+        <dd class="col-sm-9">
+            <span id="usernameDisplay">@Model.User.Username</span>
+            <button class="btn btn-sm btn-link" onclick="toggleEdit('username')">Edit</button>
+            <input type="text" id="usernameInput" class="form-control d-none" />
+        </dd>
+
+        <dt class="col-sm-3">Email</dt>
+        <dd class="col-sm-9">
+            <span id="emailDisplay">@Model.User.Email</span>
+            <button class="btn btn-sm btn-link" onclick="toggleEdit('email')">Edit</button>
+            <input type="email" id="emailInput" class="form-control d-none" />
+        </dd>
+
+        <dt class="col-sm-3">Phone</dt>
+        <dd class="col-sm-9">
+            <span id="phoneDisplay">@Model.User.Phone</span>
+            <button class="btn btn-sm btn-link" onclick="toggleEdit('phone')">Edit</button>
+            <input type="tel" id="phoneInput" class="form-control d-none" />
+        </dd>
+
+        <dt class="col-sm-3">Password</dt>
+        <dd class="col-sm-9">
+            <span id="passwordDisplay">********</span>
+            <button class="btn btn-sm btn-link" onclick="toggleEdit('password')">Change</button>
+            <input type="password" id="passwordInput" class="form-control d-none" placeholder="New Password" />
+        </dd>
+    </dl>
+
+    <button class="btn btn-primary" onclick="submitUpdates()">Save Changes</button>
+</div>
+
+@section Scripts {
+    <script>
+        const API_BASE = '@Configuration["ApiSettings:BaseUrl"]';
+        function toggleEdit(field) {
+            document.getElementById(`${field}Display`).classList.toggle('d-none');
+            document.getElementById(`${field}Input`).classList.toggle('d-none');
+
+            const current = document.getElementById(`${field}Display`).textContent;
+            if (document.getElementById(`${field}Input`)) {
+                document.getElementById(`${field}Input`).value = current === "********" ? "" : current;
+            }
+        }
+
+            async function submitUpdates() {
+            const data = {
+                Username: document.getElementById("usernameInput").value || "@Model.User.Username",
+                Email: document.getElementById("emailInput").value || "@Model.User.Email",
+                Phone: document.getElementById("phoneInput").value || "@Model.User.Phone",
+                Password: document.getElementById("passwordInput").value
+            };
+
+            const res = await fetch(`${API_BASE}/api/Users/UpdateProfile`, {
+                method: "PUT",
+                headers: { 'Content-Type': 'application/json' },
+                credentials: "include",
+                body: JSON.stringify(data)
+            });
+
+            if (res.ok) {
+                alert("Profile updated!");
+                location.reload();
+            } else {
+                alert("Failed to update.");
+            }
+        }
+    </script>
+}

@@ -77,6 +77,7 @@ namespace CRM_API.Services
         {
             var claims = new[]
             {
+                new Claim("UserID", user.UserID.ToString()),
                 new Claim(ClaimTypes.Name, user.Username),
                 new Claim(ClaimTypes.NameIdentifier, user.UserID.ToString()),
                 new Claim(ClaimTypes.Role, user.Role)
