@@ -20,7 +20,7 @@ namespace CRM_API.Services
             var query = _context.DBTask
                 .Include(t => t.Contact)
                 .Include(t => t.Deal)
-                .Where(t => isAdmin || t.CreatedBy == userId)
+                .Where(t => t.CreatedBy == userId)
                 .OrderByDescending(t => t.DueDate)
                 .Select(t => new TaskDto
                 {
