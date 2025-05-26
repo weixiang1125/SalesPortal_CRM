@@ -8,6 +8,7 @@
         public string Group { get; set; } = "";
         public bool IsActive { get; set; }
         public string? AgentName { get; set; }
+        public string? ContactName { get; set; }
 
     }
 

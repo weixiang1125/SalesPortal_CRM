@@ -79,5 +79,19 @@ namespace CRM_API.Services
             _dbContext.DBContacts.Remove(contact);
             return await _dbContext.SaveChangesAsync() > 0;
         }
+
+        public async Task<bool> UpdateContactNameByPhoneAsync(string phone, string name, int updatedBy)
+        {
+            var contact = await _dbContext.DBContacts.FirstOrDefaultAsync(c => c.Phone == phone);
+            if (contact == null) return false;
+
+            contact.Name = name;
+            contact.UpdatedDate = TimeHelper.Now();
+            contact.UpdatedBy = updatedBy;
+
+            await _dbContext.SaveChangesAsync();
+            return true;
+        }
+
     }
 }

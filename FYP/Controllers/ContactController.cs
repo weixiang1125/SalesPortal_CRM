@@ -117,4 +117,16 @@ public class ContactController : BaseController
 
         return NoContent();
     }
+
+    [Authorize]
+    [HttpPut("UpdateNameByPhone")]
+    public async Task<IActionResult> UpdateNameByPhone([FromBody] UpdateContactNameDto dto)
+    {
+        var success = await _contactService.UpdateContactNameByPhoneAsync(dto.Phone, dto.Name, CurrentUserId);
+        if (!success)
+            return NotFound();
+
+        return NoContent();
+    }
+
 }

@@ -12,6 +12,6 @@ namespace CRM_API.Services
         Task<bool> DeleteContactByIdAsync(int id);
         Task<IEnumerable<Contact>> GetAllContactsWithUsersAsync();
         Task<Contact?> GetContactByPhoneAsync(string phone);
-
+        Task<bool> UpdateContactNameByPhoneAsync(string phone, string name, int updatedBy);
     }
 }

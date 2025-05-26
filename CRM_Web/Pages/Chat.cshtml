@@ -222,16 +222,11 @@
                     var preview = item.Text?.Length > 30 ? item.Text.Substring(0, 30) + "..." : item.Text;
                     var time = item.Date?.ToString("hh:mm tt") ?? "";
 
-
                     <a href="#" onclick="event.preventDefault(); selectChat('@item.Phone')" class="list-group-item list-group-item-action @(item.IsActive ? "active" : "")">
                         <div class="d-flex justify-content-between align-items-center">
-                        <strong>
-                            @item.Phone
-                            @if (!string.IsNullOrEmpty(item.AgentName))
-                            {
-                                <span class="text-muted small">(@item.AgentName)</span>
-                            }
-                        </strong>
+                            <strong>
+                                @(string.IsNullOrEmpty(item.ContactName) ? item.Phone : $"{item.ContactName} ({item.Phone})")
+                            </strong>
                             <small class="text-muted">@time</small>
                         </div>
                         <div class="d-flex justify-content-between align-items-center">
@@ -241,6 +236,7 @@
                         </div>
                     </a>
                 }
+
             </ul>
         </div>
 
@@ -288,11 +284,17 @@
             <h6>Contact Info</h6>
             @if (!string.IsNullOrEmpty(Model.SelectedPhone))
             {
+                <div class="mb-3">
+                    <strong>Name:</strong>
+                    <div class="input-group">
+                        <input type="text" id="contactNameInput" class="form-control" value="@Model.ContactName" />
+                        <button class="btn btn-outline-primary" onclick="saveContactName()">Save</button>
+                    </div>
+                </div>
                 <div class="mb-3"><strong>Phone:</strong> <div>@Model.SelectedPhone</div></div>
-                <div class="mb-3"><strong>Name:</strong> <div><!-- Add name if needed --></div></div>
+
                 <div class="d-grid gap-2">
-                    <button class="btn btn-outline-secondary">📝 Add Note</button>
-                    <button class="btn btn-outline-success" onclick="openCreateDealModal()">💼 Create Deal</button>
+                    <button class="btn btn-outline-success" onclick="openCreateDealModal()">Create Deal</button>
                 </div>
 
             }
@@ -474,6 +476,32 @@
 
 
 
+            async function saveContactName() {
+                const name = document.getElementById("contactNameInput").value;
+                const phone = selectedPhone;
+
+                const dto = {
+                    phone: phone,
+                    name: name
+                };
+
+                const res = await fetch(`${window.API_BASE_URL}/api/Contact/UpdateNameByPhone`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    credentials: "include",
+                    body: JSON.stringify(dto)
+                });
+
+                if (res.ok) {
+                    alert("Name updated");
+                    await refreshSidebar(); // Optional: update list too
+                    document.querySelector("#contactList").innerHTML = "";
+                } else {
+                    alert("Failed to update name");
+                }
+            }
 
 
              function scrollToBottom() {
@@ -711,10 +739,9 @@
                         list.innerHTML += `
                     <a href="?phone=${encodeURIComponent(msg.phone)}" class="list-group-item list-group-item-action ${activeClass}">
                         <div class="d-flex justify-content-between align-items-center">
-                            <strong>
-                                ${msg.phone}
-                                ${msg.agentName ? `<span class="text-muted small">(${msg.agentName})</span>` : ""}
-                            </strong>
+                            <strong>${msg.contactName ? `${msg.contactName} (${msg.phone})` : msg.phone}</strong>
+
+                            ${msg.agentName ? `<small class="text-muted"> • ${msg.agentName}</small>` : ""}
 
                             <small class="text-muted">${time}</small>
                         </div>

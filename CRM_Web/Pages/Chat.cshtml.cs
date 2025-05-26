@@ -26,6 +26,7 @@ namespace CRM_Web.Pages.Chat
 
         [BindProperty] public string SelectedPhone { get; set; } = "";
         [BindProperty] public string MessageText { get; set; } = "";
+        public string ContactName { get; set; } = "";
 
         public async Task<IActionResult> OnGetAsync(string? phone)
         {
@@ -59,6 +60,8 @@ namespace CRM_Web.Pages.Chat
 
             // Ensure the contact exists
             var contact = await _context.DBContacts.FirstOrDefaultAsync(c => c.Phone == SelectedPhone);
+            ContactName = contact?.Name ?? "";
+
             if (contact == null)
             {
                 contact = new Contact
@@ -165,7 +168,8 @@ namespace CRM_Web.Pages.Chat
                     Date = localDate,
                     Group = group,
                     IsActive = SelectedPhone == normalized,
-                    AgentName = agentName
+                    AgentName = agentName,
+                    ContactName = contact?.Name
                 });
             }
 
@@ -258,6 +262,8 @@ namespace CRM_Web.Pages.Chat
                 }
 
                 var convertedDate = lastMsg?.CreatedDate;
+                var contact = await _context.DBContacts
+                    .FirstOrDefaultAsync(c => c.Phone == normalized);
 
                 lastMessages.Add(new
                 {
@@ -270,6 +276,7 @@ namespace CRM_Web.Pages.Chat
                            lastMsg.MessageType == "document" ? "[Document]" :
                            "[File]",
                     date = convertedDate,
+                    contactName = contact?.Name,
                     timeString = convertedDate?.ToString("hh:mm tt"),
                     unreadCount,
                     group = groupLabel,
