@@ -9,11 +9,93 @@
 }
 @inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 <style>
     .task-sidebar {
         max-height: 100vh;
         overflow-y: auto;
     }
+
+    .card {
+        border-radius: 1rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        border: none;
+    }
+
+    body {
+        font-family: 'Poppins', sans-serif;
+        background-color: #f8f9fa;
+        color: #333;
+    }
+
+    h2, h3, h4, h5, h6 {
+        font-weight: 600;
+    }
+
+    .card-body.text-center h3 {
+        font-size: 1.75rem;
+        color: #007bff;
+    }
+
+    .card-body.text-center h6 {
+        font-size: 1rem;
+        margin-bottom: 0.25rem;
+        color: #6c757d;
+    }
+
+    .table {
+        border-radius: 0.75rem;
+        overflow: hidden;
+        background-color: #fff;
+    }
+
+        .table th, .table td {
+            vertical-align: middle;
+            padding: 0.75rem;
+        }
+
+    .table-dark th {
+        background-color: #343a40;
+        color: #fff;
+    }
+
+    .task-sidebar .card,
+    #kanbanBoard .card-body > .card {
+        border-left: 5px solid #6c757d;
+    }
+
+    .task-column[data-status="Not Started"] > .card {
+        border-left-color: #ffc107;
+    }
+
+    .task-column[data-status="In Progress"] > .card {
+        border-left-color: #0d6efd;
+    }
+
+    .task-column[data-status="Completed"] > .card {
+        border-left-color: #198754;
+    }
+
+    .card .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+    }
+
+    .btn {
+        border-radius: 0.5rem;
+        font-weight: 500;
+    }
+
+    .btn-primary {
+        background-color: #4e73df;
+        border: none;
+    }
+
+        .btn-primary:hover {
+            background-color: #375ac2;
+        }
+
+
 </style>
 
 <div class="container py-5">
@@ -187,14 +269,27 @@
                         borderWidth: 1
                     }]
                 },
-                options: {
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: { callback: value => `RM ${value.toLocaleString()}` }
+                            options: {
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => `RM ${ctx.raw.toLocaleString()}`
+                        }
+                    }
+                },
+                layout: {
+                    padding: { left: 10, right: 10, top: 20, bottom: 10 }
+                },
+                scales: {
+                    y: {
+                        ticks: {
+                            callback: value => `RM ${value.toLocaleString()}`
                         }
                     }
                 }
+            }
+
             });
         </script>
     }
