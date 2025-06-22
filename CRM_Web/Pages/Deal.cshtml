@@ -4,7 +4,79 @@
     ViewData["Title"] = "Deals";
 }
 @inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+<style>
+    .kanban-column {
+        min-height: 300px;
+        background-color: #f8f9fa; /* Light background for columns */
+        border-radius: 0.3rem; /* Match Bootstrap card border-radius */
+        padding: 1rem;
+        transition: background-color 0.2s ease; /* Smooth transition */
+    }
 
+        .kanban-column.sortable-chosen {
+            background-color: #e9ecef; /* Feedback when dragging over */
+        }
+
+    .deal-card {
+        background-color: #ffffff;
+        border: 1px solid #dee2e6; /* Softer border */
+        border-radius: 0.5rem; /* Slightly more rounded corners */
+        padding: 1rem;
+        margin-bottom: 0.75rem; /* Increased spacing between cards */
+        cursor: grab;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); /* Subtle shadow */
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; /* Smooth hover effect */
+        position: relative; /* For potential badges/icons */
+    }
+
+        .deal-card:hover {
+            transform: translateY(-3px); /* Lift effect on hover */
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15); /* More pronounced shadow */
+        }
+
+        .deal-card strong {
+            font-size: 1.1rem;
+            color: #343a40; /* Darker text for emphasis */
+            display: block; /* Ensure it takes full width */
+            margin-bottom: 0.5rem;
+        }
+
+        .deal-card p {
+            font-size: 0.9rem;
+            color: #6c757d; /* Muted text for details */
+            line-height: 1.3;
+        }
+
+        /* Optional: Add a small badge for status or value */
+        .deal-card .deal-value {
+            font-weight: bold;
+            color: #007bff; /* Primary blue for value */
+        }
+
+    /* Styles for the drag ghost (Sortable.js) */
+    .sortable-ghost {
+        opacity: 0.4;
+        background-color: #f0f0f0;
+        border: 1px dashed #ced4da;
+    }
+
+    /* Header styling for Kanban columns */
+    .card-header {
+        border-bottom: 1px solid rgba(0,0,0,.125); /* Default Bootstrap border */
+        background-color: #343a40; /* Darker header */
+        color: white;
+        padding: 0.75rem 1.25rem;
+        font-weight: 600;
+        font-size: 1.1rem;
+        border-top-left-radius: calc(0.5rem - 1px); /* Match new card border-radius */
+        border-top-right-radius: calc(0.5rem - 1px);
+    }
+
+    /* Adjust the min-height if needed for columns */
+    .kanban-column {
+        min-height: 400px; /* Give more visual space */
+    }
+</style>
 <h2 class="mb-4">Deals</h2>
 
 <div class="mb-3">
