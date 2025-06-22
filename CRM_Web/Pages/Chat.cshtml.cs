@@ -58,25 +58,36 @@ namespace CRM_Web.Pages.Chat
                 .Trim();
             SelectedPhone = raw.StartsWith("+") ? raw : "+" + raw;
 
-            var contact = await _context.DBContacts.FirstOrDefaultAsync(c => c.Phone == SelectedPhone);
-            ContactName = contact?.Name ?? "";
 
-
-            if (contact == null)
-            {
-                contact = new Contact
-                {
-                    Phone = SelectedPhone,
-                    Name = "Unknown " + SelectedPhone,
-                    CreatedDate = TimeHelper.Now(),
-                    CreatedBy = userId
-                };
-                _context.DBContacts.Add(contact);
-                await _context.SaveChangesAsync();
-            }
             var role = HttpContext.Session.GetString("Role");
 
-            // Ensure the channel exists (but skip for Admin)
+            var contact = await _context.DBContacts.FirstOrDefaultAsync(c => c.Phone == SelectedPhone);
+            if (contact == null)
+            {
+                if (role != "Admin")
+                {
+                    contact = new Contact
+                    {
+                        Phone = SelectedPhone,
+                        Name = "Unknown " + SelectedPhone,
+                        CreatedDate = TimeHelper.Now(),
+                        CreatedBy = userId
+                    };
+                    _context.DBContacts.Add(contact);
+                    await _context.SaveChangesAsync();
+                }
+                else
+                {
+                    // Admin should not auto-create contact; redirect or handle cleanly
+                    SelectedPhone = "";
+                    ContactName = "";
+                    Messages = new List<ChatMessage>();
+                    return Page();
+                }
+            }
+
+            ContactName = contact?.Name ?? "";
+
             ChatChannel? channel = null;
             if (role == "Admin")
             {
