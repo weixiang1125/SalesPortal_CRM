@@ -392,7 +392,8 @@
                 <div class="row g-3">
                     @* Modified Cards for Icons and Text Layout *@
                     <div class="col-md-4">
-                        <div class="metric-card target-sales"> @* Added target-sales class here *@
+                        <div class="metric-card target-sales">
+                            @* Added target-sales class here *@
                             <div class="metric-card-body">
                                 <h6>Target Sales</h6>
                             </div>
@@ -403,7 +404,8 @@
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="metric-card total-sales"> @* Added total-sales class here *@
+                        <div class="metric-card total-sales">
+                            @* Added total-sales class here *@
                             <div class="metric-card-body">
                                 <h6>Total Sales</h6>
                             </div>
@@ -414,7 +416,8 @@
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="metric-card deal-count"> @* Added deal-count class here *@
+                        <div class="metric-card deal-count">
+                            @* Added deal-count class here *@
                             <div class="metric-card-body">
                                 <h6>Deal Count</h6>
                             </div>
@@ -425,7 +428,8 @@
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="metric-card success-rate"> @* Added success-rate class here *@
+                        <div class="metric-card success-rate">
+                            @* Added success-rate class here *@
                             <div class="metric-card-body">
                                 <h6>Success Rate</h6>
                             </div>
@@ -436,7 +440,8 @@
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="metric-card deal-won"> @* This one was already correctly identified *@
+                        <div class="metric-card deal-won">
+                            @* This one was already correctly identified *@
                             <div class="metric-card-body">
                                 <h6>Deal Won</h6>
                             </div>
@@ -447,7 +452,8 @@
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="metric-card deal-lost"> @* This one was already correctly identified *@
+                        <div class="metric-card deal-lost">
+                            @* This one was already correctly identified *@
                             <div class="metric-card-body">
                                 <h6>Deal Lost</h6>
                             </div>
@@ -510,13 +516,14 @@
                 </button>
             </div>
             <div class="card-body">
-                <div class="row g-3" id="kanbanBoard"> @* Changed g-4 to g-3 for consistent spacing *@
+                <div class="row g-3" id="kanbanBoard">
+                    @* Changed g-4 to g-3 for consistent spacing *@
                     @foreach (var status in new[] { "Not Started", "In Progress", "Completed" })
                     {
                         <div class="col-md-4">
                             <h5 class="mb-3 text-center">@status</h5>
                             <div class="task-column" data-status="@status"> </div>
-                            </div>
+                        </div>
                     }
                 </div>
             </div>
@@ -524,76 +531,86 @@
     }
     else @* Non-Admin Role *@
     {
-        <div class="row g-3 mb-4">
-            @* Modified Cards for Icons and Text Layout for non-admin role *@
-            <div class="col-md-4">
-                <div class="metric-card target-sales"> @* Added target-sales class here *@
-                    <div class="metric-card-body">
-                        <h6>Target Sales</h6>
+        @* Wrapped the metric cards for non-admin in a card component as requested *@
+        <div class="card mb-4">
+            <div class="card-header fw-bold">📦 Sales Performance Overview</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    @* Modified Cards for Icons and Text Layout for non-admin role *@
+                    <div class="col-md-4">
+                        <div class="metric-card target-sales">
+                            @* Added target-sales class here *@
+                            <div class="metric-card-body">
+                                <h6>Target Sales</h6>
+                            </div>
+                            <div class="metric-value-container">
+                                <span class="metric-value-text">@ViewData["TargetSales"]</span>
+                                <div class="metric-icon-wrapper"><i class="fas fa-bullseye"></i></div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="metric-value-container">
-                        <span class="metric-value-text">@ViewData["TargetSales"]</span>
-                        <div class="metric-icon-wrapper"><i class="fas fa-bullseye"></i></div>
+                    <div class="col-md-4">
+                        <div class="metric-card total-sales">
+                            @* Added total-sales class here *@
+                            <div class="metric-card-body">
+                                <h6>Total Sales</h6>
+                            </div>
+                            <div class="metric-value-container">
+                                <span class="metric-value-text">@ViewData["TotalSales"]</span>
+                                <div class="metric-icon-wrapper"><i class="fas fa-dollar-sign"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="metric-card deal-count">
+                            @* Added deal-count class here *@
+                            <div class="metric-card-body">
+                                <h6>Deal Count</h6>
+                            </div>
+                            <div class="metric-value-container">
+                                <span class="metric-value-text">@ViewData["DealCount"]</span>
+                                <div class="metric-icon-wrapper"><i class="fas fa-handshake"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="metric-card success-rate">
+                            @* Added success-rate class here *@
+                            <div class="metric-card-body">
+                                <h6>Success Rate</h6>
+                            </div>
+                            <div class="metric-value-container">
+                                <span class="metric-value-text">@ViewData["SuccessRate"]</span>
+                                <div class="metric-icon-wrapper"><i class="fas fa-chart-line"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="metric-card deal-won">
+                            @* This one was already correctly identified *@
+                            <div class="metric-card-body">
+                                <h6>Deal Won</h6>
+                            </div>
+                            <div class="metric-value-container">
+                                <span class="metric-value-text">@ViewData["DealWon"]</span>
+                                <div class="metric-icon-wrapper"><i class="fas fa-trophy"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="metric-card deal-lost">
+                            @* This one was already correctly identified *@
+                            <div class="metric-card-body">
+                                <h6>Deal Lost</h6>
+                            </div>
+                            <div class="metric-value-container">
+                                <span class="metric-value-text">@ViewData["DealLost"]</span>
+                                <div class="metric-icon-wrapper"><i class="fas fa-times-circle"></i></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="metric-card total-sales"> @* Added total-sales class here *@
-                    <div class="metric-card-body">
-                        <h6>Total Sales</h6>
-                    </div>
-                    <div class="metric-value-container">
-                        <span class="metric-value-text">@ViewData["TotalSales"]</span>
-                        <div class="metric-icon-wrapper"><i class="fas fa-dollar-sign"></i></div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="metric-card deal-count"> @* Added deal-count class here *@
-                    <div class="metric-card-body">
-                        <h6>Deal Count</h6>
-                    </div>
-                    <div class="metric-value-container">
-                        <span class="metric-value-text">@ViewData["DealCount"]</span>
-                        <div class="metric-icon-wrapper"><i class="fas fa-handshake"></i></div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="metric-card success-rate">
-                    @* Added success-rate class here *@
-                    <div class="metric-card-body">
-                        <h6>Success Rate</h6>
-                    </div>
-                    <div class="metric-value-container">
-                        <span class="metric-value-text">@ViewData["SuccessRate"]</span>
-                        <div class="metric-icon-wrapper"><i class="fas fa-chart-line"></i></div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="metric-card deal-won"> @* This one was already correctly identified *@
-                    <div class="metric-card-body">
-                        <h6>Deal Won</h6>
-                    </div>
-                    <div class="metric-value-container">
-                        <span class="metric-value-text">@ViewData["DealWon"]</span>
-                        <div class="metric-icon-wrapper"><i class="fas fa-trophy"></i></div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="metric-card deal-lost"> @* This one was already correctly identified *@
-                    <div class="metric-card-body">
-                        <h6>Deal Lost</h6>
-                    </div>
-                    <div class="metric-value-container">
-                        <span class="metric-value-text">@ViewData["DealLost"]</span>
-                        <div class="metric-icon-wrapper"><i class="fas fa-times-circle"></i></div>
-                    </div>
-                </div>
-            </div>
-            
         </div>
 
         <div class="card mb-4">
@@ -624,20 +641,26 @@
             </div>
         </div>
 
-        <div class="d-flex justify-content-between align-items-center mb-2">
-            <h4 class="mb-0">Tasks & Reminders</h4>
-            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#taskModal">
-                <i class="fas fa-plus"></i> Add Task
-            </button>
-        </div>
-        <div class="row g-3" id="kanbanBoard"> @* Changed g-4 to g-3 for consistent spacing *@
-            @foreach (var status in new[] { "Not Started", "In Progress", "Completed" })
-            {
-                <div class="col-md-4">
-                    <h5 class="mb-3 text-center">@status</h5> 
-                    <div class="task-column" data-status="@status" style="min-height: 300px;"></div>
-                    </div>
-            }
+        @* Modified section for non-admin Tasks & Reminders *@
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-bold">⏰ Tasks & Reminders</span>
+                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#taskModal">
+                    <i class="fas fa-plus"></i> Add Task
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="row g-3" id="kanbanBoard">
+                    @* Changed g-4 to g-3 for consistent spacing *@
+                    @foreach (var status in new[] { "Not Started", "In Progress", "Completed" })
+                    {
+                        <div class="col-md-4">
+                            <h5 class="mb-3 text-center">@status</h5>
+                            <div class="task-column" data-status="@status" style="min-height: 300px;"></div>
+                        </div>
+                    }
+                </div>
+            </div>
         </div>
     }
 </div>
