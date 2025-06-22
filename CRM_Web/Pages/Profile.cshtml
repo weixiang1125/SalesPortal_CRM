@@ -2,63 +2,113 @@
 @model CRM_Web.Pages.Profile.ProfileModel
 @{
     ViewData["Title"] = "My Profile";
+    Layout = "_Layout"; // Ensure it uses your shared layout for consistent fonts/styles
 }
 @inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 
-<div class="container mt-5">
-    <h3>👤 My Profile</h3>
-    <dl class="row">
-        <dt class="col-sm-3">Username</dt>
-        <dd class="col-sm-9">
-            <span id="usernameDisplay">@Model.User.Username</span>
-            <button class="btn btn-sm btn-link" onclick="toggleEdit('username')">Edit</button>
-            <input type="text" id="usernameInput" class="form-control d-none" />
-        </dd>
+<div class="container py-4">
+    <h3 class="mb-4 text-dark"><i class="fas fa-user-circle me-2"></i>My Profile</h3>
 
-        <dt class="col-sm-3">Email</dt>
-        <dd class="col-sm-9">
-            <span id="emailDisplay">@Model.User.Email</span>
-            <button class="btn btn-sm btn-link" onclick="toggleEdit('email')">Edit</button>
-            <input type="email" id="emailInput" class="form-control d-none" />
-        </dd>
+    <div class="row g-4">
 
-        <dt class="col-sm-3">Phone</dt>
-        <dd class="col-sm-9">
-            <span id="phoneDisplay">@Model.User.Phone</span>
-            <button class="btn btn-sm btn-link" onclick="toggleEdit('phone')">Edit</button>
-            <input type="tel" id="phoneInput" class="form-control d-none" />
-        </dd>
 
-        <dt class="col-sm-3">Password</dt>
-        <dd class="col-sm-9">
-            <span id="passwordDisplay">********</span>
-            <button class="btn btn-sm btn-link" onclick="toggleEdit('password')">Change</button>
-            <input type="password" id="passwordInput" class="form-control d-none" placeholder="New Password" />
-        </dd>
-    </dl>
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 rounded-4 mb-4 p-4">
+                <h5 class="mb-4 text-dark card-title">Personal Information</h5>
+                <form id="profileUpdateForm">
+                    <div class="mb-3 row align-items-center">
+                        <label for="usernameInput" class="col-sm-3 col-form-label text-muted">Username</label>
+                        <div class="col-sm-9 d-flex align-items-center">
+                            <span id="usernameDisplay" class="form-control-plaintext text-dark fw-semibold me-2">@Model.User.Username</span>
+                            <input type="text" id="usernameInput" class="form-control flex-grow-1 d-none" value="@Model.User.Username" />
+                            <button type="button" class="btn btn-sm btn-link text-decoration-none p-0 ms-auto" onclick="toggleEdit('username')">Edit</button>
+                        </div>
+                    </div>
 
-    <button class="btn btn-primary" onclick="submitUpdates()">Save Changes</button>
+                    <div class="mb-3 row align-items-center">
+                        <label for="emailInput" class="col-sm-3 col-form-label text-muted">Email</label>
+                        <div class="col-sm-9 d-flex align-items-center">
+                            <span id="emailDisplay" class="form-control-plaintext text-dark fw-semibold me-2">@Model.User.Email</span>
+                            <input type="email" id="emailInput" class="form-control flex-grow-1 d-none" value="@Model.User.Email" />
+                            <button type="button" class="btn btn-sm btn-link text-decoration-none p-0 ms-auto" onclick="toggleEdit('email')">Edit</button>
+                        </div>
+                    </div>
+
+                    <div class="mb-3 row align-items-center">
+                        <label for="phoneInput" class="col-sm-3 col-form-label text-muted">Phone</label>
+                        <div class="col-sm-9 d-flex align-items-center">
+                            <span id="phoneDisplay" class="form-control-plaintext text-dark fw-semibold me-2">@Model.User.Phone</span>
+                            <input type="tel" id="phoneInput" class="form-control flex-grow-1 d-none" value="@Model.User.Phone" />
+                            <button type="button" class="btn btn-sm btn-link text-decoration-none p-0 ms-auto" onclick="toggleEdit('phone')">Edit</button>
+                        </div>
+                    </div>
+
+                    <div class="mb-4 row align-items-center">
+                        <label for="passwordInput" class="col-sm-3 col-form-label text-muted">Password</label>
+                        <div class="col-sm-9 d-flex align-items-center">
+                            <span id="passwordDisplay" class="form-control-plaintext text-dark fw-semibold me-2">********</span>
+                            <input type="password" id="passwordInput" class="form-control flex-grow-1 d-none" placeholder="Enter new password" />
+                            <button type="button" class="btn btn-sm btn-link text-decoration-none p-0 ms-auto" onclick="toggleEdit('password')">Change</button>
+                        </div>
+                        <div class="col-sm-9 offset-sm-3 mt-2 text-muted small" id="passwordNote" style="display:none;">
+                            Leave blank if you don't want to change your password.
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-primary rounded-pill"><i class="fas fa-save me-2"></i>Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 
 @section Scripts {
     <script>
         const API_BASE = '@Configuration["ApiSettings:BaseUrl"]';
-        function toggleEdit(field) {
-            document.getElementById(`${field}Display`).classList.toggle('d-none');
-            document.getElementById(`${field}Input`).classList.toggle('d-none');
 
-            const current = document.getElementById(`${field}Display`).textContent;
-            if (document.getElementById(`${field}Input`)) {
-                document.getElementById(`${field}Input`).value = current === "********" ? "" : current;
+        // Function to toggle between display span and input field
+        function toggleEdit(field) {
+            const displaySpan = document.getElementById(`${field}Display`);
+            const inputField = document.getElementById(`${field}Input`);
+            const editButton = displaySpan.nextElementSibling; // Get the button sibling
+
+            displaySpan.classList.toggle('d-none');
+            inputField.classList.toggle('d-none');
+
+            if (inputField.classList.contains('d-none')) {
+                // Now in display mode: reset button text
+                editButton.textContent = field === 'password' ? 'Change' : 'Edit';
+                if (field === 'password') {
+                     document.getElementById('passwordNote').style.display = 'none';
+                }
+            } else {
+                // Now in edit mode: set value and change button text
+                if (field !== 'password') { // Don't pre-fill password field
+                    inputField.value = displaySpan.textContent;
+                } else {
+                    document.getElementById('passwordNote').style.display = 'block';
+                }
+                editButton.textContent = 'Cancel';
             }
         }
 
-            async function submitUpdates() {
+        // Handle the single form submission
+        document.getElementById('profileUpdateForm').addEventListener('submit', async (e) => {
+            e.preventDefault(); // Prevent default form submission
+
+            const saveButton = e.submitter;
+            const originalButtonText = saveButton.innerHTML;
+            saveButton.disabled = true;
+            saveButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...'; // Show loading state
+
+            // Collect all values, preferring input values if available
             const data = {
-                Username: document.getElementById("usernameInput").value || "@Model.User.Username",
-                Email: document.getElementById("emailInput").value || "@Model.User.Email",
-                Phone: document.getElementById("phoneInput").value || "@Model.User.Phone",
-                Password: document.getElementById("passwordInput").value
+                Username: document.getElementById("usernameInput").value,
+                Email: document.getElementById("emailInput").value,
+                Phone: document.getElementById("phoneInput").value,
+                Password: document.getElementById("passwordInput").value // This will be empty if not changed
             };
 
             const res = await fetch(`${API_BASE}/api/Users/UpdateProfile`, {
@@ -69,11 +119,15 @@
             });
 
             if (res.ok) {
-                alert("Profile updated!");
-                location.reload();
+                alert("Profile updated successfully!");
+                location.reload(); // Reload to reflect changes and reset UI state
             } else {
-                alert("Failed to update.");
+                const errorText = await res.text();
+                alert(`Failed to update profile: ${errorText}`);
+                // Re-enable button and restore text on error
+                saveButton.disabled = false;
+                saveButton.innerHTML = originalButtonText;
             }
-        }
+        });
     </script>
 }
