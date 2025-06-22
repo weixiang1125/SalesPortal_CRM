@@ -9,6 +9,7 @@
         public bool IsActive { get; set; }
         public string? AgentName { get; set; }
         public string? ContactName { get; set; }
+        public int UnreadCount { get; set; }
 
     }
 

@@ -6,24 +6,175 @@
 }
 @inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 
-    <style>
-        html, body {
-            height: 100%;
-            overflow: hidden;
+<style>
+    /* Reset and Base Styles */
+    html, body {
+        height: 100%;
+        overflow: hidden; /* Control overall page overflow */
+        font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+        background-color: #F8FAFC; /* Lighter background for the entire page */
+    }
+
+    /* CSS Variables for Colors (Updated to Blue Theme) */
+    :root {
+        --primary-color: #4F46E5; /* A vibrant Indigo for primary elements */
+        --primary-color-rgb: 79, 70, 229; /* RGB components for rgba() */
+        --primary-darker-color: #3B33C9; /* A slightly darker Indigo for hover states */
+        --secondary-color: #E0E7FF; /* A light Indigo for secondary elements and backgrounds */
+        --text-dark: #1F2937; /* Darker text for better contrast */
+        --text-medium: #4B5563; /* Medium gray for secondary text */
+        --card-bg: #ffffff;
+        --card-shadow: rgba(0,0,0,0.08);
+        --border-radius-lg: 1.25rem; /* More rounded corners */
+        --border-radius-md: 0.75rem;
+    }
+
+    /* Main Container for Chat */
+    .chat-container {
+        height: calc(100vh - 60px); /* Adjust for topbar height from _Layout */
+        display: flex;
+        flex-direction: row;
+        margin: 0;
+        min-height: 0;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); /* Subtle overall shadow */
+        border-radius: 12px;
+        overflow: hidden; /* Ensure rounded corners work */
+    }
+
+    /* Left Panel (Chat List) */
+    .chat-list-panel {
+        flex: 0 0 460px;Fixed width for chat list */
+        background-color: #FFFFFF;
+        border-right: 1px solid #E2E8F0; /* Softer border */
+        padding: 1.5rem;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .chat-list-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 10px; /* Add padding below header */
+        border-bottom: 1px solid #E2E8F0;
+    }
+
+        .chat-list-header h5 {
+            font-weight: 600;
+            color: #333;
         }
+
+    .chat-list-panel .btn-outline-primary {
+        border-radius: 8px;
+        padding: 0.4rem 0.9rem;
+        font-size: 0.9rem;
+        color: var(--primary-color); /* Changed from #4CAF50 */
+        border-color: var(--primary-color); /* Changed from #4CAF50 */
+        transition: all 0.2s ease;
+    }
+
+        .chat-list-panel .btn-outline-primary:hover {
+            background-color: var(--primary-color); /* Changed from #4CAF50 */
+            color: white;
+        }
+
+    .sidebar-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        flex-grow: 1; /* Ensures it expands to fill available space */
+        flex-basis: 0; /* Crucial for scrollable flex items to correctly calculate their size */
+        overflow-y: auto; /* Ensures the list itself scrolls if its content overflows */
+    }
+
+        .sidebar-list .list-group-item {
+            background-color: #FFFFFF;
+            border: none;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            padding: 1rem 1.25rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* Vertically center content */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03); /* subtle shadow for each item */
+        }
+
+            .sidebar-list .list-group-item:hover {
+                background-color: #F0F4F8; /* Light hover effect */
+                transform: translateY(-2px); /* Slight lift on hover */
+            }
+
+            .sidebar-list .list-group-item.active {
+                background-color: var(--secondary-color) !important; /* Changed from #E6F3E6 */
+                border-left: 4px solid var(--primary-color) !important; /* Changed from #4CAF50 */
+                border-radius: 10px 0 0 10px;
+                color: #333 !important;
+                font-weight: 600;
+                box-shadow: 0 4px 8px rgba(0,0,0,0.08); /* More pronounced shadow for active */
+            }
+
+                .sidebar-list .list-group-item.active strong,
+                .sidebar-list .list-group-item.active small,
+                .sidebar-list .list-group-item.active div {
+                    color: #333 !important; /* Ensure text is dark in active state */
+                }
+
+        .sidebar-list .text-truncate {
+            max-width: 90%; /* Adjust for badge */
+        }
+
+        .sidebar-list .badge {
+            background-color: #F44336; /* Red for unread count (kept red as it's an alert color) */
+            font-size: 0.75rem;
+            padding: 0.3em 0.6em;
+            border-radius: 10px;
+        }
+
+        .sidebar-list .text-muted {
+            color: #777 !important; /* Consistent muted color */
+        }
+
+    .day-group-label {
+        background-color: var(--secondary-color); /* Kept as light blue/lavender from previous suggestion */
+        color: #555;
+        font-size: 0.7rem;
+        padding: 0.3rem 1rem;
+        border-radius: 15px;
+        margin: 1rem auto; /* Center the label */
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        pointer-events: auto;
+        display: inline-block; /* Allow proper centering */
+    }
+
+    /* Chat Panel (Middle) */
+    .chat-panel {
+        flex: 1 1 auto;
+        display: flex;
+        flex-direction: column;
+        background-color: #F5F6FA; /* Lightest gray for chat background */
+        min-height: 0;
+        position: relative;
+    }
 
     #chatMessages {
         flex: 1 1 auto;
         overflow-y: auto;
+        padding: 1.5rem; /* More padding */
         min-height: 0;
-        background-color: #f5f6fa;
-        padding: 1rem;
+        background-color: #F5F6FA;
+        scroll-behavior: smooth; /* Smooth scrolling for new messages */
     }
 
         #chatMessages.loading::before {
-            content: "Loading...";
-            font-size: 0.8rem;
-            color: #888;
+            content: "Loading messages..."; /* More user-friendly message */
+            font-size: 0.9rem;
+            color: #AAA;
             display: block;
             text-align: center;
             padding: 1rem;
@@ -33,101 +184,255 @@
         position: sticky;
         top: 0;
         z-index: 30;
-        background-color: #f5f6fa;
-        padding: 0.25rem 1rem;
+        background-color: #DDE2EC; /* Slightly darker than chat background */
+        padding: 0.5rem 1rem;
         text-align: center;
-        font-size: 0.75rem;
+        font-size: 0.8rem;
         color: #555;
         border-radius: 1rem;
-        margin: 0.5rem;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        margin: 0.5rem auto; /* Center the date */
+        box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+        max-width: fit-content; /* Make it fit content */
     }
 
     .chat-bubble {
-        max-width: 75%;
-        padding: 0.75rem 1rem;
-        border-radius: 1rem;
+        max-width: 70%; /* Slightly less wide */
+        padding: 0.9rem 1.2rem; /* More generous padding */
+        border-radius: 20px; /* More rounded corners */
         word-break: break-word;
         white-space: pre-wrap;
-        font-size: 0.95rem;
+        font-size: 0.9rem;
+        line-height: 1.4;
         overflow-wrap: break-word;
-        background-color: #ffffff;
-        color: black;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08); /* Subtle shadow for bubbles */
     }
 
+        .chat-bubble.received {
+            background-color: #FFFFFF; /* White for received messages */
+            color: #333;
+            border-bottom-left-radius: 6px; /* "Tail" effect */
+        }
+
         .chat-bubble.sent {
-            background-color: #0d6efd;
+            background-color: var(--primary-color); /* Changed from #4CAF50 */
             color: white;
+            border-bottom-right-radius: 6px; /* "Tail" effect */
         }
 
     .chat-meta {
-        font-size: 0.7rem;
-        color: #888;
-        margin-top: 4px;
+        font-size: 0.65rem; /* Smaller metadata */
+        color: #999; /* Lighter gray for metadata */
+        margin-top: 5px;
+        opacity: 0.8; /* Slightly transparent */
     }
 
-    .chat-meta.left {
-        text-align: left;
-    }
+        .chat-meta.left {
+            text-align: left;
+        }
 
-    .chat-meta.right {
-        text-align: right;
-    }
+        .chat-meta.right {
+            text-align: right;
+        }
 
     .day-wrapper {
         display: flex;
         justify-content: center;
-        margin: 1rem 0; /* spacing between days */
+        margin: 1.5rem 0; /* More spacing between days */
         pointer-events: none;
     }
 
-    .day-label {
-        background-color: #e0e0e0;
+    /* Message Input Bar */
+    #chatInputBar {
+        background-color: #FFFFFF;
+        border-top: 1px solid #E2E8F0;
+        padding: 1rem 1.5rem; /* More padding */
+        position: sticky;
+        bottom: 0;
+        z-index: 10;
+        box-shadow: 0 -4px 10px rgba(0,0,0,0.03); /* Top shadow */
+    }
+
+    #chatInput {
+        border-radius: 25px; /* Rounded input field */
+        padding: 0.75rem 1.25rem;
+        font-size: 0.95rem;
+        border-color: #E2E8F0;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+        #chatInput:focus {
+            border-color: var(--primary-color); /* Changed from #4CAF50 */
+            box-shadow: 0 0 0 0.25rem rgba(var(--primary-color-rgb), 0.25); /* Changed from rgba(76, 175, 80, 0.25) */
+        }
+
+    #fileInputLabel, #recordButton {
+        border-radius: 50%; /* Circular buttons */
+        width: 45px;
+        height: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
         color: #555;
-        font-size: 0.75rem;
-        padding: 0.25rem 1rem;
-        border-radius: 1rem;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        pointer-events: auto;
+        border: 1px solid #E2E8F0;
+        background-color: #F8FAFC;
+        cursor: pointer;
+        transition: background-color 0.2s ease, color 0.2s ease, transform 0.1s ease;
     }
 
-    .list-group-item {
-        padding: 0.75rem 1rem;
+        #fileInputLabel:hover, #recordButton:hover {
+            background-color: var(--secondary-color); /* Changed from #E0E7FF (but was already blueish) - now explicitly tied to var */
+            color: var(--primary-color); /* Changed from #4CAF50 */
+            transform: scale(1.05);
+        }
+
+        #recordButton.recording {
+            background-color: #F44336; /* Red when recording (kept red as it's an alert color) */
+            color: white;
+        }
+
+    #sendButton {
+        border-radius: 25px; /* Rounded send button */
+        padding: 0.75rem 1.5rem;
+        font-size: 1rem;
+        background-color: var(--primary-color); /* Changed from #4CAF50 */
+        border-color: var(--primary-color); /* Changed from #4CAF50 */
+        transition: background-color 0.2s ease, transform 0.1s ease;
     }
 
-    .list-group-item .text-truncate {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+        #sendButton:hover {
+            background-color: var(--primary-darker-color); /* Changed from #43A047 */
+            transform: translateY(-1px);
+        }
+
+    #uploadProgress {
+        margin-top: 10px;
+        border-radius: 5px; /* Rounded progress bar */
+        background-color: #E2E8F0;
     }
 
-    .list-group-item.active {
-        background-color: #e3f2fd !important; /* Softer blue */
-        border-color: #b6daff !important;
-        color: #000 !important; /* Ensure text is readable */
+    #uploadProgressBar {
+        background-color: var(--primary-color); /* Changed from #4CAF50 */
+        border-radius: 5px;
     }
 
-    .list-group-item.active strong,
-    .list-group-item.active small,
-    .list-group-item.active div {
-       color: #000 !important;
+    /* Right Panel (Contact Info) */
+    .contact-info-panel {
+        flex: 0 0 300px; /* Fixed width */
+        background-color: #FFFFFF;
+        border-left: 1px solid #E2E8F0;
+        padding: 1.5rem;
+        overflow-y: auto;
     }
 
+        .contact-info-panel h6 {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 1.5rem;
+        }
 
-    </style>
+        .contact-info-panel .form-control {
+            border-radius: 8px;
+            border-color: #E2E8F0;
+            font-size: 0.95rem;
+        }
+
+        .contact-info-panel .btn-outline-primary {
+            border-radius: 8px;
+            color: var(--primary-color); /* Changed from #4CAF50 */
+            border-color: var(--primary-color); /* Changed from #4CAF50 */
+        }
+
+            .contact-info-panel .btn-outline-primary:hover {
+                background-color: var(--primary-color); /* Changed from #4CAF50 */
+                color: white;
+            }
+
+        .contact-info-panel .btn-success {
+            border-radius: 8px;
+            background-color: var(--primary-color); /* Changed from #4CAF50 */
+            border-color: var(--primary-color); /* Changed from #4CAF50 */
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+        }
+
+            .contact-info-panel .btn-success:hover {
+                background-color: var(--primary-darker-color); /* Changed from #43A047 */
+                transform: translateY(-1px);
+            }
+
+        .contact-info-panel .text-muted {
+            color: #777 !important;
+        }
+
+    /* Modal Styling (kept as is, generally modals should be neutral or follow app's primary color) */
+    .modal-content {
+        border-radius: 12px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+    }
+
+    .modal-header {
+        border-bottom: 1px solid #E2E8F0;
+        padding: 1.5rem;
+    }
+
+    .modal-title {
+        font-weight: 600;
+        color: #333;
+    }
+
+    .modal-body {
+        padding: 1.5rem;
+    }
+
+    .modal-footer {
+        border-top: 1px solid #E2E8F0;
+        padding: 1.5rem;
+    }
+
+    /* Media Message Styling */
+    .chat-bubble img, .chat-bubble video {
+        max-width: 100%; /* Changed: !important removed */
+        height: auto;
+        border-radius: 10px;
+        margin-bottom: 5px;
+    }
+
+    .chat-bubble audio {
+        width: 100%;
+        margin-bottom: 5px;
+    }
+
+    .chat-bubble a {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+        .chat-bubble a.text-white {
+            color: white !important;
+        }
+
+        .chat-bubble a.text-black {
+            color: black !important;
+        }
+
+</style>
 
 <div class="d-flex flex-column h-100" style="height: 100vh; margin: 0;">
-        <div class="row flex-nowrap flex-grow-1 overflow-hidden" style="margin: 0; min-height: 0;">
-        <!-- Chat List -->
-        <div class="col-3 border-end bg-white p-3 overflow-auto">
-            <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="row flex-nowrap flex-grow-1 overflow-hidden chat-container">
+        <div class="chat-list-panel">
+            <div class="chat-list-header">
                 <h5 class="mb-0">Chats</h5>
                 <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#newChatModal">
                     + New
                 </button>
             </div>
 
-            <!-- New Chat Modal -->
             <div class="modal fade" id="newChatModal" tabindex="-1" aria-labelledby="newChatModalLabel" aria-hidden="true">
                 <div class="modal-dialog">
                     <div class="modal-content">
@@ -138,19 +443,19 @@
                         <div class="modal-body">
                             <input type="text" id="contactSearch" class="form-control mb-2" placeholder="Search name or phone..." oninput="filterContacts()" />
 
-                            <div style="max-height: 300px; overflow-y: auto;">
-                                <ul id="contactList" class="list-group mb-2">
+                            <div style="max-height: 300px; overflow-y: auto; border: 1px solid #E2E8F0; border-radius: 8px;">
+                                <ul id="contactList" class="list-group list-group-flush mb-0">
                                     @foreach (var contact in Model.AllContacts)
                                     {
                                         <li class="list-group-item list-group-item-action" onclick="event.preventDefault(); selectChat('@contact.Phone')">
                                             <strong>@contact.Name</strong><br />
-                                            <small>@contact.Phone</small>
+                                            <small class="text-muted">@contact.Phone</small>
                                         </li>
                                     }
                                 </ul>
                             </div>
 
-                            <div id="newContactOption" class="text-muted small d-none">
+                            <div id="newContactOption" class="text-muted small d-none mt-3">
                                 No match found. <a href="#" onclick="startNewChatFromInput()">Start new chat with this number</a>
                             </div>
                         </div>
@@ -162,53 +467,52 @@
                 </div>
             </div>
 
-        <div class="modal fade" id="createDealModal" tabindex="-1" aria-labelledby="createDealModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <form class="modal-content" id="dealForm">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="createDealModalLabel">Create Deal</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <input type="hidden" id="dealContactPhone" name="contactPhone" />
-                        <div class="mb-3">
-                            <label for="dealName" class="form-label">Deal Name</label>
-                            <input type="text" class="form-control" id="dealName" name="dealName" required>
+            <div class="modal fade" id="createDealModal" tabindex="-1" aria-labelledby="createDealModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <form class="modal-content" id="dealForm">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="createDealModalLabel">Create Deal</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                        <div class="mb-3">
-                            <label for="dealValue" class="form-label">Value</label>
-                            <input type="number" class="form-control" id="dealValue" name="dealValue" required>
+                        <div class="modal-body">
+                            <input type="hidden" id="dealContactPhone" name="contactPhone" />
+                            <div class="mb-3">
+                                <label for="dealName" class="form-label">Deal Name</label>
+                                <input type="text" class="form-control" id="dealName" name="dealName" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="dealValue" class="form-label">Value</label>
+                                <input type="number" class="form-control" id="dealValue" name="dealValue" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="dealStage" class="form-label">Stage</label>
+                                <select class="form-select" id="dealStage" name="dealStage" required>
+                                    <option value="Prospecting">Prospecting</option>
+                                    <option value="Negotiation">Negotiation</option>
+                                    <option value="Closed-Won">Closed-Won</option>
+                                    <option value="Closed-Lost">Closed-Lost</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="dealStatus" class="form-label">Status</label>
+                                <select class="form-select" id="dealStatus" name="dealStatus" required>
+                                    <option value="Active">Active</option>
+                                    <option value="Inactive">Inactive</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="expectedCloseDate" class="form-label">Expected Close Date</label>
+                                <input type="date" class="form-control" id="expectedCloseDate" name="expectedCloseDate" required>
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            <label for="dealStage" class="form-label">Stage</label>
-                            <select class="form-select" id="dealStage" name="dealStage" required>
-                                <option value="Prospecting">Prospecting</option>
-                                <option value="Negotiation">Negotiation</option>
-                                <option value="Closed-Won">Closed-Won</option>
-                                <option value="Closed-Lost">Closed-Lost</option>
-                            </select>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-success">Create Deal</button>
                         </div>
-                        <div class="mb-3">
-                            <label for="dealStatus" class="form-label">Status</label>
-                            <select class="form-select" id="dealStatus" name="dealStatus" required>
-                                <option value="Active">Active</option>
-                                <option value="Inactive">Inactive</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="expectedCloseDate" class="form-label">Expected Close Date</label>
-                            <input type="date" class="form-control" id="expectedCloseDate" name="expectedCloseDate" required>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-success">Create Deal</button>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
-        </div>
 
-            <ul class="list-group sidebar-list">
-
+            <ul class="list-group sidebar-list flex-grow-1">
                 @{
                     string lastGroup = "";
                 }
@@ -216,7 +520,9 @@
                 {
                     if (item.Group != lastGroup)
                     {
-                        <li class="list-group-item text-center text-muted small bg-light sticky-top">@item.Group</li>
+                        <li class="list-group-item text-center small bg-light sticky-top day-group-label" style="z-index:1;">
+                            @item.Group
+                        </li>
                         lastGroup = item.Group;
                     }
 
@@ -224,9 +530,9 @@
                     var time = item.Date?.ToString("hh:mm tt") ?? "";
 
                     <a href="#" onclick="event.preventDefault(); selectChat('@item.Phone')" class="list-group-item list-group-item-action @(item.IsActive ? "active" : "")">
-                        <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
                             <strong>
-                                @(string.IsNullOrEmpty(item.ContactName) ? item.Phone : $"{item.ContactName} ({item.Phone})")
+                                @(string.IsNullOrEmpty(item.ContactName) ? item.Phone : $"{item.ContactName}")
                             </strong>
                             <small class="text-muted">@time</small>
                         </div>
@@ -234,55 +540,52 @@
                             <div class="text-truncate small text-muted" style="max-width: 85%;">
                                 @preview
                             </div>
+                            @if (item.UnreadCount > 0 && item.Phone != Model.SelectedPhone)
+                            {
+                                <span class="badge bg-danger ms-2">@item.UnreadCount</span>
+                            }
                         </div>
+                        @if (!string.IsNullOrEmpty(item.AgentName))
+                        {
+                            <small class="text-muted mt-1" style="font-size: 0.65rem;">Assigned to: @item.AgentName</small>
+                        }
                     </a>
                 }
-
             </ul>
         </div>
 
-            <!-- Chat Panel -->
-            <div class="col-6 d-flex flex-column p-0" style="height: 100%; min-height: 0; overflow: hidden;">
-
-
-
-                <!-- ✅ Sticky date stays here, OUTSIDE the scrollable area -->
-                <div id="floatingDate">Today</div>
-
-                <!-- ✅ Only this div scrolls -->
-                <div id="chatMessages" style="flex-grow: 1; overflow-y: auto; padding: 1rem; background-color: #f5f6fa;">
-                    <!-- messages and day wrappers go here -->
+        <div class="chat-panel">
+            <div id="floatingDate">Today</div>
+            <div id="chatMessages">
                 </div>
 
-                <!-- Message input bar -->
-                <div id="chatInputBar" class="d-flex flex-column border-top px-3 py-2"
-                     style="position: sticky; bottom: 0; background-color: #f8f9fa; z-index: 10;">
-                    <div class="d-flex align-items-center w-100">
-                        <label class="btn btn-outline-secondary me-2 mb-0">
-                            <i class="fas fa-paperclip"></i>
-                            <input type="file" id="fileInput" hidden />
-                        </label>
-                        <textarea id="chatInput" class="form-control me-2"
-                                  rows="1"
-                                  placeholder="Type a message..."
-                                  style="resize: none; max-height: 150px; overflow-y: auto;"></textarea>
-                        <label class="btn btn-outline-secondary me-2 mb-0" id="recordButton">
-                            🎤
-                        </label>
+            <div id="chatInputBar" class="d-flex flex-column">
+                <div class="d-flex align-items-end w-100">
+                    <label class="btn btn-outline-secondary me-2 mb-0" id="fileInputLabel">
+                        <i class="fas fa-paperclip"></i>
+                        <input type="file" id="fileInput" hidden />
+                    </label>
+                    <textarea id="chatInput" class="form-control me-2"
+                                rows="1"
+                                placeholder="Type a message..."
+                                style="resize: none; max-height: 150px; overflow-y: auto;"></textarea>
+                    <label class="btn btn-outline-secondary me-2 mb-0" id="recordButton">
+                        <i class="fas fa-microphone"></i>
+                    </label>
+                    <button id="sendButton" class="btn btn-primary">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
 
-                        <button id="sendButton" class="btn btn-primary">Send</button>
-                    </div>
-
-                    <div id="uploadProgress" class="w-100 mt-2 d-none">
-                        <div class="progress" style="height: 6px;">
-                            <div id="uploadProgressBar" class="progress-bar" style="width: 0%;"></div>
-                        </div>
+                <div id="uploadProgress" class="w-100 mt-2 d-none">
+                    <div class="progress" style="height: 6px;">
+                        <div id="uploadProgressBar" class="progress-bar" style="width: 0%;"></div>
                     </div>
                 </div>
             </div>
+        </div>
 
-        <!-- Contact Info -->
-        <div class="col-3 border-start bg-white p-3">
+        <div class="contact-info-panel">
             <h6>Contact Info</h6>
             @if (!string.IsNullOrEmpty(Model.SelectedPhone))
             {
@@ -295,8 +598,8 @@
                 </div>
                 <div class="mb-3"><strong>Phone:</strong> <div>@Model.SelectedPhone</div></div>
 
-                <div class="d-grid gap-2">
-                    <button class="btn btn-outline-success" onclick="openCreateDealModal()">Create Deal</button>
+                <div class="d-grid gap-2 mt-4">
+                    <button class="btn btn-success" onclick="openCreateDealModal()">Create Deal</button>
                 </div>
 
             }
@@ -306,6 +609,7 @@
             }
         </div>
     </div>
+</div>
 
 
     @section Scripts {
@@ -506,11 +810,16 @@
             }
 
 
-             function scrollToBottom() {
-                requestAnimationFrame(() => {
-                    messageContainer.scrollTop = messageContainer.scrollHeight;
-                });
-            }
+              function scrollToBottom() {
+                    requestAnimationFrame(() => {
+                        const lastMessage = messageContainer.lastElementChild;
+                        if (lastMessage) {
+                            // Using 'auto' for behavior is typically better for real-time chat
+                            // as it prevents a small scroll animation every time.
+                            lastMessage.scrollIntoView({ behavior: 'auto', block: 'end' });
+                        }
+                    });
+                }
 
 
             chatInput.addEventListener("keydown", function (event) {
@@ -629,43 +938,71 @@
                     if (isSender) bubble.classList.add("sent");
 
                     // Render content based on type
-                    if (messageType === "image") {
-                        const img = document.createElement("img");
-                        img.src = getFullUrl(messageText);
-                        img.alt = "image";
-                        img.style.maxWidth = "200px";
-                        img.style.borderRadius = "0.5rem";
-                        bubble.appendChild(img);
-                    } else if (messageType === "video") {
-                        const video = document.createElement("video");
-                        video.src = getFullUrl(messageText);
-                        video.controls = true;
-                        video.style.maxWidth = "250px";
-                        bubble.appendChild(video);
-                    } else if (messageType === "audio") {
-                        const audio = document.createElement("audio");
-                        audio.src = getFullUrl(messageText);
-                        audio.controls = true;
-                        bubble.appendChild(audio);
-                    } else if (messageType === "document") {
-                        const link = document.createElement("a");
-                        link.href = getFullUrl(messageText);
-                        link.textContent = "📄 Download Document";
-                        link.target = "_blank";
-                        link.style.color = isSender ? "white" : "black"; // Ensure contrast
-                        link.style.textDecoration = "underline";
-                        bubble.appendChild(link);
-                    } else {
-                        bubble.innerHTML = messageText.replace(/\n/g, "<br>");
-                    }
+                        if (messageType === "image") {
+                    const img = document.createElement("img");
+                    img.src = getFullUrl(messageText);
+                    img.alt = "image";
+                    img.style.maxWidth = "200px";
+                    img.style.borderRadius = "0.5rem";
+                    bubble.appendChild(img);
+                    // ⭐ NEW: Wait for image to load before attempting to scroll
+                    img.onload = () => {
+                        scrollToBottom();
+                    };
+                    img.onerror = () => {
+                        console.error("Failed to load image:", img.src);
+                        scrollToBottom(); // Still try to scroll even if image fails to load
+                    };
+                } else if (messageType === "video") {
+                    const video = document.createElement("video");
+                    video.src = getFullUrl(messageText);
+                    video.controls = true;
+                    video.style.maxWidth = "250px";
+                    bubble.appendChild(video);
+                    // ⭐ NEW: Wait for video metadata to load
+                    video.onloadedmetadata = () => {
+                        scrollToBottom();
+                    };
+                    video.onerror = () => {
+                        console.error("Failed to load video:", video.src);
+                        scrollToBottom(); // Still try to scroll
+                    };
+                } else if (messageType === "audio") {
+                    const audio = document.createElement("audio");
+                    audio.src = getFullUrl(messageText);
+                    audio.controls = true;
+                    bubble.appendChild(audio);
+                    // ⭐ NEW: Wait for audio metadata to load
+                    audio.onloadedmetadata = () => {
+                        scrollToBottom();
+                    };
+                    audio.onerror = () => {
+                        console.error("Failed to load audio:", audio.src);
+                        scrollToBottom(); // Still try to scroll
+                    };
+                } else if (messageType === "document") {
+                    const link = document.createElement("a");
+                    link.href = getFullUrl(messageText);
+                    link.textContent = "📄 Download Document";
+                    link.target = "_blank";
+                    link.style.color = isSender ? "white" : "black";
+                    link.style.textDecoration = "underline";
+                    bubble.appendChild(link);
+                    // ⭐ For documents, the size is usually fixed, so a direct scroll is fine.
+                    setTimeout(scrollToBottom, 50);
+                } else { // messageType === "text"
+                    bubble.innerHTML = messageText.replace(/\n/g, "<br>");
+                    // ⭐ For text, a direct scroll is fine.
+                    setTimeout(scrollToBottom, 50);
+                }
 
-                    const time = document.createElement("div");
-                    time.className = "chat-meta " + (isSender ? "right" : "left");
-                    time.textContent = timeString;
+                const time = document.createElement("div");
+                time.className = "chat-meta " + (isSender ? "right" : "left");
+                time.textContent = timeString;
 
-                    wrapper.appendChild(bubble);
-                    wrapper.appendChild(time);
-                    messageContainer.appendChild(wrapper);
+                wrapper.appendChild(bubble);
+                wrapper.appendChild(time);
+                messageContainer.appendChild(wrapper);
                 }
 
 
@@ -739,23 +1076,23 @@
                         const activeClass = msg.phone === selectedPhone ? "active" : "";
 
                         list.innerHTML += `
-                    <a href="?phone=${encodeURIComponent(msg.phone)}" class="list-group-item list-group-item-action ${activeClass}">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <strong>${msg.contactName ? `${msg.contactName} (${msg.phone})` : msg.phone}</strong>
-
-                            ${msg.agentName ? `<small class="text-muted"> • ${msg.agentName}</small>` : ""}
-
-                            <small class="text-muted">${time}</small>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div class="text-truncate small text-muted" style="max-width: 85%;">
-                                ${preview}
-                            </div>
-                            ${msg.unreadCount > 0 && msg.phone !== selectedPhone
-                                ? `<span class="badge bg-danger ms-2">${msg.unreadCount}</span>`
-                                : ""}
-                        </div>
-                    </a>`;
+                                    <a href="?phone=${encodeURIComponent(msg.phone)}" class="list-group-item list-group-item-action ${activeClass}">
+            <div class="d-flex justify-content-between align-items-start"> <div class="flex-grow-1 text-truncate"> <strong>
+                        ${msg.contactName ? `${msg.contactName} ` : ''}
+                        (${msg.phone})
+                        ${msg.agentName ? `<small class="text-muted"> • ${msg.agentName}</small>` : ""}
+                    </strong>
+                </div>
+                <small class="text-muted ms-auto">${time}</small> </div>
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="text-truncate small text-muted" style="max-width: 85%;">
+                    ${preview}
+                </div>
+                ${msg.unreadCount > 0 && msg.phone !== selectedPhone
+                    ? `<span class="badge bg-danger ms-2">${msg.unreadCount}</span>`
+                    : ""}
+            </div>
+        </a>`;
                     });
 
                     // 🧠 Re-join SignalR groups for any new phone numbers
@@ -829,7 +1166,6 @@
 
                             shownMessageIds.add(msg.messageId);
                             appendMessage(msg.messageText, msg.isSender, msg.createdDate, msg.timeString, msg.messageType); // ✅ Add messageType here
-                            setTimeout(scrollToBottom, 50);
                             scrollToBottom();
                             refreshSidebar();
                         } catch (err) {
